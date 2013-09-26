@@ -8,6 +8,5 @@ python:
 install:
   - "pip install . --use-mirrors"
   - "pip install -r tests/requirements.txt --use-mirrors"
-  - "nosetests -w tests --with-gae --without-sandbox -v"
 # command to run tests
-script: tests/runtests.py --with-pep8
+script: nosetests -w tests --with-gae --without-sandbox
