@@ -1,12 +1,15 @@
 language: python
 python:
-  - "2.7"
+  - 2.7
+
 # command to install dependencies
 install:
   - "pip install . --use-mirrors"
   - "pip install -r tests/requirements.txt --use-mirrors"
+
 # command to run tests
-script: nosetests -w tests --with-coverage --cover-package=wtforms_appengine --with-gae --without-sandbox
+script: "coverage run --source=wtforms_appengine `which nosetests` -w tests --with-gae --without-sandbox"
+
 after_success:
   - pip install coveralls --use-mirrors
   - coveralls

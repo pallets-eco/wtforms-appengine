@@ -1,3 +1,4 @@
+coverage
 nose
 NoseGAE
 appengine
