@@ -7,8 +7,9 @@ It should be the first import in the unit tests.
 import sys
 import os
 my_dir = os.path.dirname(os.path.abspath(__file__))
-WTFORMS_DIR = os.path.abspath(os.path.join(my_dir, '..', '..'))
-sys.path.insert(0, WTFORMS_DIR)
+BASE_DIR = os.path.abspath(os.path.join(my_dir, '..'))
+if BASE_DIR not in sys.path:
+    sys.path.insert(0, BASE_DIR)
 
 SAMPLE_AUTHORS = (
     ('Bob', 'Boston'),
