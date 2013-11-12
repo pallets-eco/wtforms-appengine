@@ -11,14 +11,14 @@ nosetests --with-gae --without-sandbox
 from __future__ import unicode_literals
 
 # This needs to stay as the first import, it sets up paths.
-from gaetest_common import DummyPostData
+from gaetest_common import DummyPostData, fill_authors
 
 from unittest import TestCase
 from google.appengine.ext import db
 
 from wtforms import Form, fields as f, validators
 from wtforms_appengine.db import model_form
-from wtforms_appengine.fields import GeoPtPropertyField
+from wtforms_appengine.fields import GeoPtPropertyField, ReferencePropertyField
 
 
 class Author(db.Model):
@@ -73,13 +73,16 @@ class DateTimeModel(db.Model):
     prop_time_3 = db.TimeProperty(auto_now_add=True)
 
 
-class TestModelForm(TestCase):
+class BaseDBCase(TestCase):
     def tearDown(self):
         for entity in Author.all():
             db.delete(entity)
 
         for entity in Book.all():
             db.delete(entity)
+
+
+class TestModelForm(BaseDBCase):
 
     def test_model_form_basic(self):
         form_class = model_form(Author)
@@ -245,7 +248,7 @@ class TestModelForm(TestCase):
         assert not keys
 
 
-class TestFields(TestCase):
+class TestGeoFields(TestCase):
     class GeoTestForm(Form):
         geo = GeoPtPropertyField()
 
@@ -255,3 +258,44 @@ class TestFields(TestCase):
         self.assertEqual(form.geo.data, '5.0,-7.0')
         form = self.GeoTestForm(DummyPostData(geo='5.0,-f'))
         self.assertFalse(form.validate())
+
+
+class TestReferencePropertyField(BaseDBCase):
+
+    def build_form(self, **kw):
+        class BookForm(Form):
+            author = ReferencePropertyField(**kw)
+        return BookForm
+
+    def author_expected(self, selected_index, get_label=lambda x: x.name):
+        expected = set()
+        for i, author in enumerate(self.authors):
+            expected.add((str(author.key()), get_label(author), i == selected_index))
+        return expected
+
+    def build_authors(self):
+        self.authors = fill_authors(Author)
+        self.author_names = set(x.name for x in self.authors)
+        self.author_ages = set(x.age for x in self.authors)
+
+    def test_basic(self):
+        self.build_authors()
+        F = self.build_form(
+            reference_class=Author,
+            get_label='name'
+        )
+        form = F()
+        self.assertEqual(set(form.author.iter_choices()), self.author_expected(None))
+        assert not form.validate()
+
+        form = F(DummyPostData(author=str(self.authors[0].key())))
+        assert form.validate()
+        self.assertEqual(set(form.author.iter_choices()), self.author_expected(0))
+
+    def test_get_label_func(self):
+        self.build_authors()
+        get_age = lambda x: x.age
+        F = self.build_form(reference_class=Author, get_label=get_age)
+        form = F()
+        ages = set(x.label.text for x in form.author)
+        self.assertEqual(ages, self.author_ages)
