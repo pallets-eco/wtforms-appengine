@@ -18,7 +18,10 @@ from google.appengine.ext import db
 
 from wtforms import Form, fields as f, validators
 from wtforms_appengine.db import model_form
-from wtforms_appengine.fields import GeoPtPropertyField, ReferencePropertyField
+from wtforms_appengine.fields import (
+    GeoPtPropertyField, ReferencePropertyField,
+    StringListPropertyField, IntegerListPropertyField
+)
 
 
 class Author(db.Model):
@@ -262,9 +265,9 @@ class TestGeoFields(TestCase):
 
 class TestReferencePropertyField(BaseDBCase):
 
-    def build_form(self, **kw):
+    def build_form(self, reference_class=Author, **kw):
         class BookForm(Form):
-            author = ReferencePropertyField(**kw)
+            author = ReferencePropertyField(reference_class=reference_class, **kw)
         return BookForm
 
     def author_expected(self, selected_index, get_label=lambda x: x.name):
@@ -273,15 +276,13 @@ class TestReferencePropertyField(BaseDBCase):
             expected.add((str(author.key()), get_label(author), i == selected_index))
         return expected
 
-    def build_authors(self):
+    def setUp(self):
         self.authors = fill_authors(Author)
         self.author_names = set(x.name for x in self.authors)
         self.author_ages = set(x.age for x in self.authors)
 
     def test_basic(self):
-        self.build_authors()
         F = self.build_form(
-            reference_class=Author,
             get_label='name'
         )
         form = F()
@@ -292,10 +293,37 @@ class TestReferencePropertyField(BaseDBCase):
         assert form.validate()
         self.assertEqual(set(form.author.iter_choices()), self.author_expected(0))
 
+    def test_not_in_query(self):
+        F = self.build_form()
+        new_author = Author(name='Jim', age=48)
+        new_author.put()
+        form = F(author=new_author)
+        form.author.query = query=Author.all().filter('name !=', 'Jim')
+        assert form.author.data is new_author
+        assert not form.validate()
+
     def test_get_label_func(self):
-        self.build_authors()
         get_age = lambda x: x.age
-        F = self.build_form(reference_class=Author, get_label=get_age)
+        F = self.build_form(get_label=get_age)
         form = F()
         ages = set(x.label.text for x in form.author)
         self.assertEqual(ages, self.author_ages)
+
+    def test_allow_blank(self):
+        F = self.build_form(allow_blank=True, get_label='name')
+        form = F(DummyPostData(author='__None'))
+        assert form.validate()
+        self.assertEqual(form.author.data, None)
+        expected = self.author_expected(None)
+        expected.add(('__None', '', True))
+        self.assertEqual(set(form.author.iter_choices()), expected)
+
+
+class TestStringListPropertyField(TestCase):
+    class F(Form):
+        a = StringListPropertyField()
+
+    def test_basic(self):
+        form = self.F(DummyPostData(a='foo\nbar\nbaz'))
+        self.assertEqual(form.a.data, ['foo', 'bar', 'baz'])
+        self.assertEqual(form.a._value(), 'foo\nbar\nbaz')

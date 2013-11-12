@@ -27,6 +27,8 @@ Datastore-backed Fields
 
 .. autoclass:: StringListPropertyField(default field arguments)
 
+.. autoclass:: IntegerListPropertyField(default field arguments)
+
 .. autoclass:: GeoPtPropertyField(default field arguments)
 
 NDB
