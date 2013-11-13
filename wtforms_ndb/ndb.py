@@ -102,7 +102,8 @@ class:
 """
 from wtforms import Form, validators, fields as f
 from wtforms.compat import string_types
-from wtforms.ext.appengine.fields import GeoPtPropertyField, KeyPropertyField,\
+
+from .fields import GeoPtPropertyField, KeyPropertyField,\
    StringListPropertyField, IntegerListPropertyField, PrefetchedKeyPropertyField
 
 
