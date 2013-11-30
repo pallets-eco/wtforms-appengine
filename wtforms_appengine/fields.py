@@ -132,7 +132,7 @@ class KeyPropertyField(fields.SelectFieldBase):
         if self._formdata is not None:
             for obj in self.query:
                 if str(obj.key.id()) == self._formdata:
-                    self._set_data(obj)
+                    self._set_data(obj.key)
                     break
         return self._data
 
