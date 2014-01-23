@@ -1,22 +1,24 @@
 from __future__ import unicode_literals
 
-# This needs to stay as the first import, it sets up paths.
-from gaetest_common import DummyPostData, fill_authors
-
-from google.appengine.ext import ndb, testbed
-from google.appengine.datastore import datastore_stub_util
-
-from unittest import TestCase
+from google.appengine.ext import ndb
 from wtforms import Form, TextField, IntegerField, BooleanField, \
-        SelectField, SelectMultipleField, FormField, FieldList
+    SelectField, SelectMultipleField, FormField, FieldList
 from wtforms.compat import text_type
-from wtforms_ndb.fields import KeyPropertyField, \
-        PrefetchedKeyPropertyField
+
+from .gaetest_common import DummyPostData, fill_authors
+from .base import NDBTestCase
+
 from wtforms_ndb import model_form
+from wtforms_ndb.fields import KeyPropertyField, \
+    PrefetchedKeyPropertyField
+
+
+# This needs to stay as the first import, it sets up paths.
 
 ndb.utils.DEBUG = False
 
 GENRES = ['sci-fi', 'fantasy', 'other']
+
 
 class Address(ndb.Model):
     line_1 = ndb.StringProperty()
@@ -41,23 +43,6 @@ class Author(ndb.Model):
 
 class Book(ndb.Model):
     author = ndb.KeyProperty(kind=Author)
-
-
-class NDBTestCase(TestCase):
-    def setUp(self):
-        self.testbed = testbed.Testbed()
-        self.testbed.activate()
-
-        policy = datastore_stub_util.PseudoRandomHRConsistencyPolicy(
-            probability=1)
-        self.testbed.init_datastore_v3_stub(consistency_policy=policy)
-
-        ctx = ndb.get_context()
-        ctx.set_cache_policy(False)
-        ctx.set_memcache_policy(False)
-
-    def tearDown(self):
-        self.testbed.deactivate()
 
 
 class TestKeyPropertyField(NDBTestCase):
@@ -130,6 +115,7 @@ class TestPrefetchedKeyPropertyField(TestKeyPropertyField):
                     query = Author.query().order(Author.name))
 
         return F(*args, **kwargs)
+
 
 class TestModelForm(NDBTestCase):
     EXPECTED_AUTHOR = [
