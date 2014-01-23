@@ -10,9 +10,9 @@ from unittest import TestCase
 from wtforms import Form, TextField, IntegerField, BooleanField, \
         SelectField, SelectMultipleField, FormField, FieldList
 from wtforms.compat import text_type
-from wtforms.ext.appengine.fields import KeyPropertyField, \
+from wtforms_ndb.fields import KeyPropertyField, \
         PrefetchedKeyPropertyField
-from wtforms.ext.appengine.ndb import model_form
+from wtforms_ndb import model_form
 
 ndb.utils.DEBUG = False
 
