@@ -11,6 +11,7 @@ from wtforms import Form, TextField, IntegerField, BooleanField, \
         SelectField, SelectMultipleField, FormField, FieldList
 from wtforms.compat import text_type
 from wtforms_ndb.fields import KeyPropertyField, \
+        RepeatedKeyPropertyField,\
         PrefetchedKeyPropertyField
 from wtforms_ndb import model_form
 
@@ -41,6 +42,9 @@ class Author(ndb.Model):
 
 class Book(ndb.Model):
     author = ndb.KeyProperty(kind=Author)
+
+class Collab(ndb.Model):
+    authors = ndb.KeyProperty(kind=Author, repeated=True)
 
 
 class NDBTestCase(TestCase):
@@ -121,6 +125,55 @@ class TestKeyPropertyField(NDBTestCase):
         book2 = Book()
         form.populate_obj(book2)
         self.assertEqual(book2.author, author.key)
+
+
+class TestRepeatedKeyPropertyField(NDBTestCase):
+    class F(Form):
+        authors = RepeatedKeyPropertyField(reference_class=Author)
+
+    def setUp(self):
+        super(TestRepeatedKeyPropertyField, self).setUp()
+        self.authors = fill_authors(Author)
+        self.first_author_id = self.authors[0].key.id()
+        self.second_author_id = self.authors[1].key.id()
+
+    def get_form(self, *args, **kwargs):
+        form = self.F(*args, **kwargs)
+        form.authors.query = Author.query().order(Author.name)
+        return form
+
+    def test_no_data(self):
+        form = self.get_form()
+        for author, (key, label, selected) in zip(self.authors, form.authors.iter_choices()):
+            self.assertFalse(selected)
+            self.assertEqual(key, text_type(author.key.id()))
+
+    def test_empty_form(self):
+        form = self.get_form(DummyPostData(authors=[]))
+        self.assertTrue(form.validate())
+
+        inst = Collab()
+        form.populate_obj(inst)
+        self.assertEqual(inst.authors, [])
+
+    def test_values(self):
+        data = DummyPostData(authors=[
+            str(self.first_author_id),
+            str(self.second_author_id)])
+
+        form = self.get_form(data)
+        self.assertTrue(form.validate())
+
+        inst = Collab()
+        form.populate_obj(inst)
+        self.assertEqual(inst.authors,[
+            ndb.Key(Author, self.first_author_id),
+            ndb.Key(Author, self.second_author_id)])
+
+    def test_bad_value(self):
+        data = DummyPostData(authors=['foo'])
+        form = self.get_form(data)
+        self.assertFalse(form.validate())
 
 
 class TestPrefetchedKeyPropertyField(TestKeyPropertyField):
