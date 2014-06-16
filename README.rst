@@ -4,13 +4,12 @@ WTForms-Appengine
 WTForms-Appengine is a fork of the ``wtforms.ext.appengine`` package 
 from WTForms. The package has been renamed to ``wtforms_appengine`` 
 but otherwise should function the same as the ext package, at least
-for the moment
+for the moment.
 
 to install::
 	
-	pip install https://github.com/wtforms/wtforms-appengine/archive/master.zip
+	pip install WTForms-Appengine
 
-(pypi package coming soon)
 
 Rationale
 ---------

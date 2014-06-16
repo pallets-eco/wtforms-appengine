@@ -1,3 +1,4 @@
+from codecs import open
 from setuptools import setup
 
 setup(
@@ -7,7 +8,8 @@ setup(
     license='BSD',
     author='Thomas Johansson, James Crasta',
     author_email='wtforms@simplecodes.com',
-    description='Appengine tools for WTForms',
+    description='Appengine fields and form generation for WTForms',
+    long_description=open('README.rst', 'r', 'utf8').read(),
     classifiers=[
         'Development Status :: 5 - Production/Stable',
         'Environment :: Web Environment',
