@@ -298,7 +298,7 @@ class TestReferencePropertyField(BaseDBCase):
         new_author = Author(name='Jim', age=48)
         new_author.put()
         form = F(author=new_author)
-        form.author.query = query=Author.all().filter('name !=', 'Jim')
+        form.author.query = Author.all().filter('name !=', 'Jim')
         assert form.author.data is new_author
         assert not form.validate()
 
