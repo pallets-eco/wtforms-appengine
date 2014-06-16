@@ -2,7 +2,7 @@ from setuptools import setup
 
 setup(
     name='WTForms-Appengine',
-    version='0.1dev',
+    version='0.1',
     url='http://github.com/wtforms/wtforms-appengine/',
     license='BSD',
     author='Thomas Johansson, James Crasta',
