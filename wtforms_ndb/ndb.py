@@ -103,8 +103,10 @@ class:
 from wtforms import Form, validators, fields as f
 from wtforms.compat import string_types
 
-from .fields import GeoPtPropertyField, KeyPropertyField,\
-   StringListPropertyField, IntegerListPropertyField, PrefetchedKeyPropertyField
+from .fields import GeoPtPropertyField,\
+      KeyPropertyField, RepeatedKeyPropertyField,\
+      StringListPropertyField, IntegerListPropertyField, \
+      PrefetchedKeyPropertyField, RepeatedPrefetchedKeyPropertyField
 
 
 def get_TextField(kwargs):
@@ -224,7 +226,7 @@ class ModelConverter(ModelConverterBase):
     +--------------------+-------------------+--------------+------------------+
     | GeoPtProperty      | TextField         | db.GeoPt     |                  |
     +--------------------+-------------------+--------------+------------------+
-    | KeyProperty        | KeyProperyField   | ndb.Key      |                  |
+    | KeyProperty        | KeyProperyField   | ndb.Key      |                  | prefetch, repeated support.
     +--------------------+-------------------+--------------+------------------+
     | BlobKeyProperty    | None              | ndb.BlobKey  | always skipped   |
     +--------------------+-------------------+--------------+------------------+
@@ -348,6 +350,14 @@ class ModelConverter(ModelConverterBase):
 
     def convert_KeyProperty(self, model, prop, kwargs):
         """Returns a form field for a ``ndb.KeyProperty``."""
+        fields = {
+            (True, True): RepeatedPrefetchedKeyPropertyField,
+            (False, True): PrefetchedKeyPropertyField,
+            (True, False): RepeatedKeyPropertyField,
+            (False, False): KeyPropertyField,
+        }
+        field = fields[(prop._repeated, kwargs.pop('prefetch', True))]
+
         if 'reference_class' not in kwargs:
             try:
                 reference_class = prop._kind
@@ -360,7 +370,7 @@ class ModelConverter(ModelConverterBase):
                 reference_class = getattr(mod, reference_class)
             kwargs['reference_class'] = reference_class
         kwargs.setdefault('allow_blank', not prop._required)
-        return PrefetchedKeyPropertyField(**kwargs)
+        return field(**kwargs)
 
 
 

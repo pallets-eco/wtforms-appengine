@@ -8,7 +8,6 @@ from wtforms import fields, widgets
 from wtforms.compat import text_type, string_types
 
 
-
 class KeyPropertyField(fields.SelectFieldBase):
     """
     A field for ``ndb.KeyProperty``. The list items are rendered in a select.
@@ -100,6 +99,56 @@ class KeyPropertyField(fields.SelectFieldBase):
             setattr(obj, name, None)
 
 
+class SelectMultipleMixin(object):
+    widget = widgets.Select(multiple=True)
+
+    def iter_choices(self):
+        for obj  in self.query:
+            key = str(obj.key.id())
+            label = self.get_label(obj)
+            selected = self.data is not None and obj in self.data
+            yield (key, label, selected)
+
+    def process_data(self, value):
+        if value:
+            futures = [x.get_async() for x in value]
+            self.data = [x.get_result() for x in futures]
+        else:
+            self.data = None
+
+    def process_formdata(self, valuelist):
+        self._formdata = valuelist
+
+    def pre_validate(self, form):
+        if self.data:
+            values = list(self.query)
+            for d in self.data:
+                if d not in values:
+                    raise ValueError("%(value)s is not a valid choice for this field")
+
+    def _get_data(self):
+        if self._formdata is not None:
+            m = {str(obj.key.id()): obj for obj in self.query}
+            self._set_data([m.get(x, x) for x in self._formdata])
+        return self._data
+
+    def _set_data(self, data):
+        self._data = data
+        self._formdata = None
+
+    data = property(_get_data, _set_data)
+
+    def populate_obj(self, obj, name):
+        if self.data:
+            setattr(obj, name, [x.key for x in self.data])
+        else:
+            setattr(obj, name, [])
+
+
+class RepeatedKeyPropertyField(SelectMultipleMixin, KeyPropertyField):
+    widget = widgets.Select(multiple=True)
+
+
 class PrefetchedKeyPropertyField(KeyPropertyField):
     """
     A field for ``ndb.KeyProperty``. The list items are rendered in a select.
@@ -148,6 +197,10 @@ class PrefetchedKeyPropertyField(KeyPropertyField):
     @property
     def query(self):
         return self._query.get_result()
+
+
+class RepeatedPrefetchedKeyPropertyField(SelectMultipleMixin, PrefetchedKeyPropertyField):
+    widget = widgets.Select(multiple=True)
 
 
 class StringListPropertyField(fields.TextAreaField):
