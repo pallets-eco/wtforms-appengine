@@ -31,7 +31,8 @@ class KeyPropertyField(fields.SelectFieldBase):
     widget = widgets.Select()
 
     def __init__(self, label=None, validators=None, reference_class=None,
-                 get_label=None, allow_blank=False, blank_text='', **kwargs):
+                 get_label=None, allow_blank=False, blank_text='', query=None,
+                 **kwargs):
         super(KeyPropertyField, self).__init__(label, validators, **kwargs)
         if get_label is None:
             self.get_label = lambda x: x
@@ -45,7 +46,7 @@ class KeyPropertyField(fields.SelectFieldBase):
         self._set_data(None)
 
         if reference_class is not None:
-            self.query = reference_class.query()
+            self.query = query or reference_class.query()
 
     def _get_data(self):
         if self._formdata is not None:
