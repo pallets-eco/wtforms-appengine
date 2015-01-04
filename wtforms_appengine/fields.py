@@ -153,10 +153,6 @@ class KeyPropertyField(fields.SelectFieldBase):
             label = self.get_label(obj)
             yield (key, label, (self.data == obj.key) if self.data else False)
 
-    def process_data(self, data):
-        if data:
-            self.data = data.get()
-
     def process_formdata(self, valuelist):
         if valuelist:
             if valuelist[0] == '__None':
@@ -177,7 +173,7 @@ class KeyPropertyField(fields.SelectFieldBase):
 
     def populate_obj(self, obj, name):
         if self.data:
-            setattr(obj, name, self.data.key)
+            setattr(obj, name, self.data)
         else:
             setattr(obj, name, None)
 
