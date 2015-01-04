@@ -182,7 +182,7 @@ class SelectMultipleMixin(object):
     widget = widgets.Select(multiple=True)
 
     def iter_choices(self):
-        for obj  in self.query:
+        for obj in self.query:
             key = str(obj.key.id())
             label = self.get_label(obj)
             selected = self.data is not None and obj in self.data
@@ -191,7 +191,7 @@ class SelectMultipleMixin(object):
     def process_data(self, value):
         if value:
             futures = [x.get_async() for x in value]
-            self.data = [x.get_result() for x in futures]
+            self.data = [x.get_result().key for x in futures]
         else:
             self.data = None
 
@@ -200,14 +200,15 @@ class SelectMultipleMixin(object):
 
     def pre_validate(self, form):
         if self.data:
-            values = list(self.query)
+            values = self.query
+            values = [value.key for value in values] # get only the keys
             for d in self.data:
                 if d not in values:
-                    raise ValueError("%(value)s is not a valid choice for this field")
+                    raise ValueError("{} is not a valid choice.".format(d))
 
     def _get_data(self):
         if self._formdata is not None:
-            m = {str(obj.key.id()): obj for obj in self.query}
+            m = {str(obj.key.id()): obj.key for obj in self.query}
             self._set_data([m.get(x, x) for x in self._formdata])
         return self._data
 
@@ -219,7 +220,7 @@ class SelectMultipleMixin(object):
 
     def populate_obj(self, obj, name):
         if self.data:
-            setattr(obj, name, [x.key for x in self.data])
+            setattr(obj, name, [x for x in self.data])
         else:
             setattr(obj, name, [])
 
