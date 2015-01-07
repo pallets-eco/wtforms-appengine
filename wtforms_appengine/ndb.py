@@ -166,7 +166,6 @@ class ModelConverterBase(object):
 
         if kwargs.get('choices', None):
             # Use choices in a select field.
-            kwargs['choices'] = [(v, v) for v in kwargs.get('choices')]
             return f.SelectField(**kwargs)
 
         if prop._choices:
