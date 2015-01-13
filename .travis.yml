@@ -8,7 +8,7 @@ install:
   - "pip install -r tests/requirements.txt --use-mirrors"
 
 # command to run tests
-script: "coverage run --source=wtforms_appengine `which nosetests` -w tests --with-gae --without-sandbox"
+script: "coverage run --source=wtforms_appengine `which nosetests` -w tests --with-gae"
 
 after_success:
   - pip install coveralls --use-mirrors
