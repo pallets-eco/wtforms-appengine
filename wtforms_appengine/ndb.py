@@ -250,7 +250,7 @@ class ModelConverter(ModelConverterBase):
     def convert_StringProperty(self, model, prop, kwargs):
         """Returns a form field for a ``ndb.StringProperty``."""
         if prop._repeated:
-            return StringListPropertyField(**kwargs)
+            return return f.SelectMultipleField(**kwargs)
         kwargs['validators'].append(validators.length(max=500))
         return get_TextField(kwargs)
 
