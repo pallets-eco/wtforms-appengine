@@ -132,7 +132,7 @@ class KeyPropertyField(fields.SelectFieldBase):
         if self._formdata is not None:
             for obj in self.query:
                 if str(obj.key.id()) == self._formdata:
-                    self._set_data(obj)
+                    self._set_data(obj.key)
                     break
         return self._data
 
@@ -149,7 +149,7 @@ class KeyPropertyField(fields.SelectFieldBase):
         for obj in self.query:
             key = str(obj.key.id())
             label = self.get_label(obj)
-            yield (key, label, (self.data.key == obj.key) if self.data else False)
+            yield (key, label, (self.data == obj.key) if self.data else False)
 
     def process_formdata(self, valuelist):
         if valuelist:
@@ -162,7 +162,7 @@ class KeyPropertyField(fields.SelectFieldBase):
     def pre_validate(self, form):
         if self.data is not None:
             for obj in self.query:
-                if self.data.key == obj.key:
+                if self.data == obj.key:
                     break
             else:
                 raise ValueError(self.gettext('Not a valid choice'))
