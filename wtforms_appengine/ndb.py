@@ -63,6 +63,11 @@ The form can be generated setting field arguments:
 The class returned by ``model_form()`` can be used as a base class for forms
 mixing non-model fields and/or other model forms. For example:
 
+.. note:: When passing field_args for ``StructuredProperty`` and
+``LocalStructuredProperty`` you must pass in
+``{'FORM': {...} , 'FIELD': {...}, 'LIST': {...} }`` For model_form arguments,
+FormField arguments, and FieldList arguments (if repeated).
+
 .. code-block:: python
 
    # Generate a form based on the model.
@@ -91,9 +96,13 @@ class:
    ContactForm = model_form(Contact, base_class=BaseContactForm)
 
 """
+
 from wtforms import Form, validators, fields as f
 from wtforms.compat import string_types
-from .fields import GeoPtPropertyField, KeyPropertyField, StringListPropertyField, IntegerListPropertyField
+from .fields import GeoPtPropertyField,\
+      KeyPropertyField, RepeatedKeyPropertyField,\
+      StringListPropertyField, IntegerListPropertyField, \
+      PrefetchedKeyPropertyField, RepeatedPrefetchedKeyPropertyField
 
 
 def get_TextField(kwargs):
@@ -164,15 +173,15 @@ class ModelConverterBase(object):
         if prop._required and prop_type_name not in self.NO_AUTO_REQUIRED:
             kwargs['validators'].append(validators.required())
 
-        if kwargs.get('choices', None):
+        if kwargs.get('choices', None) or prop._choices:
             # Use choices in a select field.
-            kwargs['choices'] = [(v, v) for v in kwargs.get('choices')]
-            return f.SelectField(**kwargs)
+            if not kwargs.get('choices', None):
+               kwargs['choices'] =  [(v,v) for v in sorted(prop._choices)]
 
-        if prop._choices:
-            # Use choices in a select field.
-            kwargs['choices'] = [(v, v) for v in prop._choices]
-            return f.SelectField(**kwargs)
+            if prop._repeated:
+                return f.SelectMultipleField(**kwargs)
+            else:
+                return f.SelectField(**kwargs)
 
         else:
             converter = self.converters.get(prop_type_name, None)
@@ -213,15 +222,17 @@ class ModelConverter(ModelConverterBase):
     +--------------------+-------------------+--------------+------------------+
     | GeoPtProperty      | TextField         | db.GeoPt     |                  |
     +--------------------+-------------------+--------------+------------------+
-    | KeyProperty        | KeyProperyField   | ndb.Key      |                  |
+    | KeyProperty        | KeyProperyField   | ndb.Key      |                  | prefetch, repeated support
     +--------------------+-------------------+--------------+------------------+
     | BlobKeyProperty    | None              | ndb.BlobKey  | always skipped   |
     +--------------------+-------------------+--------------+------------------+
     | UserProperty       | None              | users.User   | always skipped   |
     +--------------------+-------------------+--------------+------------------+
-    | StructuredProperty | None              | ndb.Model    | always skipped   |
+    | StructuredProperty | FormField         | ndb.Model    | FieldList if     |
+    |                    |                   |              | repeated         |
     +--------------------+-------------------+--------------+------------------+
-    | LocalStructuredPro | None              | ndb.Model    | always skipped   |
+    | LocalStructuredPro | FormField         | ndb.Model    | FieldList        |
+    |                    |                   |              | repeated         |
     +--------------------+-------------------+--------------+------------------+
     | JsonProperty       | TextField         | unicode      |                  |
     +--------------------+-------------------+--------------+------------------+
@@ -239,7 +250,7 @@ class ModelConverter(ModelConverterBase):
     def convert_StringProperty(self, model, prop, kwargs):
         """Returns a form field for a ``ndb.StringProperty``."""
         if prop._repeated:
-            return StringListPropertyField(**kwargs)
+            return f.SelectMultipleField(**kwargs)
         kwargs['validators'].append(validators.length(max=500))
         return get_TextField(kwargs)
 
@@ -291,11 +302,21 @@ class ModelConverter(ModelConverterBase):
 
     def convert_StructuredProperty(self, model, prop, kwargs):
         """Returns a form field for a ``ndb.ListProperty``."""
-        return None
+        model = prop._modelclass
+
+        form_args = kwargs.get('FORM', {})
+        form_args.setdefault('converter', self)
+        form = model_form(model, **form_args)
+
+        field = f.FormField(form, default=model, **kwargs.get('FIELD',{}))
+        if prop._repeated:
+           field = f.FieldList(field, **kwargs.get('LIST', {}))
+
+        return field
 
     def convert_LocalStructuredProperty(self, model, prop, kwargs):
         """Returns a form field for a ``ndb.ListProperty``."""
-        return None
+        return self.convert_StructuredProperty(model, prop, kwargs)
 
     def convert_JsonProperty(self, model, prop, kwargs):
         """Returns a form field for a ``ndb.ListProperty``."""
@@ -328,6 +349,14 @@ class ModelConverter(ModelConverterBase):
 
     def convert_KeyProperty(self, model, prop, kwargs):
         """Returns a form field for a ``ndb.KeyProperty``."""
+        fields = {
+            (True, True): RepeatedPrefetchedKeyPropertyField,
+            (False, True): PrefetchedKeyPropertyField,
+            (True, False): RepeatedKeyPropertyField,
+            (False, False): KeyPropertyField,
+        }
+        field = fields[(prop._repeated, kwargs.pop('prefetch', True))]
+
         if 'reference_class' not in kwargs:
             try:
                 reference_class = prop._kind
@@ -340,8 +369,8 @@ class ModelConverter(ModelConverterBase):
                 reference_class = getattr(mod, reference_class)
             kwargs['reference_class'] = reference_class
         kwargs.setdefault('allow_blank', not prop._required)
-        return KeyPropertyField(**kwargs)
 
+        return field(**kwargs)
 
 
 def model_fields(model, only=None, exclude=None, field_args=None,
