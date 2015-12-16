@@ -4,12 +4,20 @@ python:
 
 # command to install dependencies
 install:
-  - "pip install . --use-mirrors"
-  - "pip install -r tests/requirements.txt --use-mirrors"
+  - "pip install ."
+  - "pip install -r tests/requirements.txt"
+  # Download the latest version of the GAE Python SDK
+  - "wget https://storage.googleapis.com/appengine-sdks/featured/google_appengine_1.9.30.zip -nv -O downloaded_appengine.zip"
+  # This extracts the zip into a temp directory, and moves the contained directory's files into our root dir
+  # This basically sets us up so "nosetests --with-gae" can use the modules
+  - 'temp=$(mktemp -d) && unzip -q -d "$temp" "downloaded_appengine.zip" && mv "$temp"/*/* "." && rmdir "$temp"/* "$temp"'
+  # This is a quick hack, necessary to get fancy_urllib working,
+  # by exposing the lib/fancy_urllib/fancy_urllib/ dirctory within for use by appengine.
+  - "rm -rf lib/fancy_urllib/__init__.py"
 
 # command to run tests
 script: "coverage run --source=wtforms_appengine `which nosetests` -w tests --with-gae"
 
 after_success:
-  - pip install coveralls --use-mirrors
+  - pip install coveralls
   - coveralls

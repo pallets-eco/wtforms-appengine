@@ -1,5 +1,4 @@
 coverage
 nose
 NoseGAE
-appengine
 WTForms>=1.0.5
