@@ -335,9 +335,12 @@ class ModelConverter(ModelConverterBase):
                 reference_class = prop._reference_class
 
             if isinstance(reference_class, string_types):
-                # reference class is a string, try to retrieve the model object.
-                mod = __import__(model.__module__, None, None, [reference_class], 0)
-                reference_class = getattr(mod, reference_class)
+                # This assumes that the referenced module is already imported.
+                try:
+                    reference_class = model._kind_map[reference_class]
+                except KeyError:
+                    # If it's not imported, just bail, as we can't edit this field safely.
+                    return None
             kwargs['reference_class'] = reference_class
         kwargs.setdefault('allow_blank', not prop._required)
         return KeyPropertyField(**kwargs)
