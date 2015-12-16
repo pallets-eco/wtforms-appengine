@@ -154,7 +154,7 @@ class ModelConverterBase(object):
             #if no type is found, the generic property uses string set in convert_GenericProperty
 
         kwargs = {
-            'label': prop._code_name.replace('_', ' ').title(),
+            'label': prop._verbose_name or prop._code_name.replace('_', ' ').title(),
             'default': prop._default,
             'validators': [],
         }
