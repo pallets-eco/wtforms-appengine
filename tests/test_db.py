@@ -86,6 +86,7 @@ class BaseDBCase(TestCase):
 
 
 class TestModelForm(BaseDBCase):
+    nosegae_datastore_v3 = True
 
     def test_model_form_basic(self):
         form_class = model_form(Author)
@@ -264,6 +265,7 @@ class TestGeoFields(TestCase):
 
 
 class TestReferencePropertyField(BaseDBCase):
+    nosegae_datastore_v3 = True
 
     def build_form(self, reference_class=Author, **kw):
         class BookForm(Form):

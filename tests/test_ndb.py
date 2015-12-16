@@ -25,6 +25,7 @@ class Book(ndb.Model):
 
 class TestKeyPropertyField(TestCase):
     nosegae_datastore_v3 = True
+
     class F(Form):
         author = KeyPropertyField(reference_class=Author)
 
@@ -64,6 +65,7 @@ class TestKeyPropertyField(TestCase):
 
 class TestModelForm(TestCase):
     nosegae_datastore_v3 = True
+
     EXPECTED_AUTHOR = [('name', TextField), ('city', TextField), ('age', IntegerField), ('is_admin', BooleanField)]
 
     def test_author(self):
