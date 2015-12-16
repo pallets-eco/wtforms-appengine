@@ -61,6 +61,7 @@ class TestKeyPropertyField(TestCase):
         print list(form.author.iter_choices())
         assert all(x[2] is False for x in form.author.iter_choices())
 
+
 class TestModelForm(TestCase):
     nosegae_datastore_v3 = True
 
