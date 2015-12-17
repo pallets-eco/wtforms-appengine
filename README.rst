@@ -1,3 +1,8 @@
+.. image:: https://travis-ci.org/wtforms/wtforms-appengine.svg?branch=master
+   :target: https://travis-ci.org/wtforms/wtforms-appengine
+.. image:: https://coveralls.io/repos/wtforms/wtforms-appengine/badge.svg?branch=master&service=github
+   :target: https://coveralls.io/github/wtforms/wtforms-appengine?branch=master
+
 WTForms-Appengine
 =================
 
