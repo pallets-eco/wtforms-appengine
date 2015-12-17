@@ -7,7 +7,7 @@ from google.appengine.ext import ndb
 from unittest import TestCase
 from wtforms import Form, TextField, IntegerField, BooleanField
 from wtforms.compat import text_type
-from wtforms_appengine.fields import KeyPropertyField
+from wtforms_appengine.fields import JsonPropertyField, KeyPropertyField
 from wtforms_appengine.ndb import model_form
 
 import second_ndb_module
@@ -22,6 +22,25 @@ class Author(ndb.Model):
 class Book(ndb.Model):
     author = ndb.KeyProperty(kind=Author)
 
+class TestJsonPropertyField(TestCase):
+    nosegae_datastore_v3 = True
+
+    class F(Form):
+        field = JsonPropertyField()
+
+    def test_round_trip(self):
+        # Valid data
+        test_data = {u'a': {'b': 3, 'c': ['a', 1, False]}}
+
+        form = self.F()
+        form.process(data={'field': test_data})
+        raw_string = form.field._value()
+        assert form.validate()
+        form2 = self.F()
+        form2.process(formdata=DummyPostData(field=raw_string))
+        assert form.validate()
+        # Test that we get back the same structure we serialized
+        self.assertEqual(test_data, form2.field.data)
 
 class TestKeyPropertyField(TestCase):
     nosegae_datastore_v3 = True
