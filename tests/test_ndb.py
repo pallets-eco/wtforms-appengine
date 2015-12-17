@@ -10,6 +10,7 @@ from wtforms.compat import text_type
 from wtforms_appengine.fields import KeyPropertyField
 from wtforms_appengine.ndb import model_form
 
+import second_ndb_module
 
 class Author(ndb.Model):
     name = ndb.StringProperty(required=True)
@@ -77,6 +78,16 @@ class TestModelForm(TestCase):
         authors = set(text_type(x.key.id()) for x in fill_authors(Author))
         authors.add('__None')
         form = model_form(Book)
+        keys = set()
+        for key, b, c in form().author.iter_choices():
+            keys.add(key)
+
+        self.assertEqual(authors, keys)
+
+    def test_second_book(self):
+        authors = set(text_type(x.key.id()) for x in fill_authors(Author))
+        authors.add('__None')
+        form = model_form(second_ndb_module.SecondBook)
         keys = set()
         for key, b, c in form().author.iter_choices():
             keys.add(key)
