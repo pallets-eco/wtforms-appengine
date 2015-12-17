@@ -1,11 +1,27 @@
 from __future__ import unicode_literals
 
 import decimal
+import json
 import operator
 
 from wtforms import fields, widgets
 from wtforms.compat import text_type, string_types
 
+class JsonPropertyField(fields.StringField):
+    """
+    This field is the base for most of the more complicated fields, and
+    represents an ``<input type="text">``.
+    """
+    widget = widgets.TextArea()
+
+    def process_formdata(self, valuelist):
+        if valuelist is not "":
+            self.data = json.loads(valuelist[0])
+        else:
+            self.data = None
+
+    def _value(self):
+        return json.dumps(self.data) if self.data is not None else ''
 
 class ReferencePropertyField(fields.SelectFieldBase):
     """
