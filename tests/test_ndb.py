@@ -1,8 +1,7 @@
 from __future__ import unicode_literals
 
 # This needs to stay as the first import, it sets up paths.
-from gaetest_common import DummyPostData, fill_authors
-from base import NDBTestCase
+from gaetest_common import DummyPostData, fill_authors, NDBTestCase
 
 from google.appengine.ext import ndb
 from wtforms import Form, TextField, IntegerField, BooleanField

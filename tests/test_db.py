@@ -11,9 +11,8 @@ nosetests --with-gae --without-sandbox
 from __future__ import unicode_literals
 
 # This needs to stay as the first import, it sets up paths.
-from gaetest_common import DummyPostData, fill_authors
+from gaetest_common import DummyPostData, fill_authors, DBTestCase
 
-from base import DBTestCase
 from unittest import TestCase
 
 from google.appengine.ext import db
