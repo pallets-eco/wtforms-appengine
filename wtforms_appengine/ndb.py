@@ -93,7 +93,12 @@ class:
 """
 from wtforms import Form, validators, fields as f
 from wtforms.compat import string_types
-from .fields import GeoPtPropertyField, JsonPropertyField, KeyPropertyField, StringListPropertyField, IntegerListPropertyField
+from .fields import (GeoPtPropertyField,
+                     JsonPropertyField,
+                     KeyPropertyField,
+                     RepeatedKeyPropertyField,
+                     StringListPropertyField,
+                     IntegerListPropertyField)
 
 
 def get_TextField(kwargs):
@@ -164,15 +169,14 @@ class ModelConverterBase(object):
         if prop._required and prop_type_name not in self.NO_AUTO_REQUIRED:
             kwargs['validators'].append(validators.required())
 
-        if kwargs.get('choices', None):
+        choices = kwargs.get('chocies', None) or prop._choices
+        if choices:
             # Use choices in a select field.
-            kwargs['choices'] = [(v, v) for v in kwargs.get('choices')]
-            return f.SelectField(**kwargs)
-
-        if prop._choices:
-            # Use choices in a select field.
-            kwargs['choices'] = [(v, v) for v in prop._choices]
-            return f.SelectField(**kwargs)
+            kwargs['choices'] = [(v, v) for v in choices]
+            if prop._repeated:
+                return f.SelectMultipleField(**kwargs)
+            else:
+                return f.SelectField(**kwargs)
 
         else:
             converter = self.converters.get(prop_type_name, None)
@@ -324,7 +328,8 @@ class ModelConverter(ModelConverterBase):
 
     def convert_KeyProperty(self, model, prop, kwargs):
         """Returns a form field for a ``ndb.KeyProperty``."""
-        if 'reference_class' not in kwargs:
+        if 'reference_class' not in kwargs\
+                or 'query' not in kwargs:
             try:
                 reference_class = prop._kind
             except AttributeError:
@@ -338,8 +343,13 @@ class ModelConverter(ModelConverterBase):
                     # If it's not imported, just bail, as we can't edit this field safely.
                     return None
             kwargs['reference_class'] = reference_class
+
         kwargs.setdefault('allow_blank', not prop._required)
-        return KeyPropertyField(**kwargs)
+
+        if prop._repeated:
+            return RepeatedKeyPropertyField(**kwargs)
+        else:
+            return KeyPropertyField(**kwargs)
 
 
 
