@@ -13,14 +13,16 @@ from __future__ import unicode_literals
 # This needs to stay as the first import, it sets up paths.
 from gaetest_common import DummyPostData, fill_authors
 
+from base import DBTestCase
 from unittest import TestCase
+
 from google.appengine.ext import db
 
 from wtforms import Form, fields as f, validators
 from wtforms_appengine.db import model_form
 from wtforms_appengine.fields import (
     GeoPtPropertyField, ReferencePropertyField,
-    StringListPropertyField, IntegerListPropertyField
+    StringListPropertyField,  # IntegerListPropertyField
 )
 
 
@@ -76,16 +78,7 @@ class DateTimeModel(db.Model):
     prop_time_3 = db.TimeProperty(auto_now_add=True)
 
 
-class BaseDBCase(TestCase):
-    def tearDown(self):
-        for entity in Author.all():
-            db.delete(entity)
-
-        for entity in Book.all():
-            db.delete(entity)
-
-
-class TestModelForm(BaseDBCase):
+class TestModelForm(DBTestCase):
     nosegae_datastore_v3 = True
 
     def test_model_form_basic(self):
@@ -193,7 +186,12 @@ class TestModelForm(BaseDBCase):
         self.assertEqual(hasattr(form_class, 'prop_im'), False)
 
     def test_populate_form(self):
-        entity = Author(key_name='test', name='John', city='Yukon', age=25, is_admin=True)
+        entity = Author(
+            key_name='test',
+            name='John',
+            city='Yukon',
+            age=25,
+            is_admin=True)
         entity.put()
 
         obj = Author.get_by_key_name('test')
@@ -217,7 +215,8 @@ class TestModelForm(BaseDBCase):
             },
             'city': {
                 'label': 'City',
-                'description': 'The city in which you live, not the one in which you were born.',
+                'description': 'The city in which you live, not the one in'
+                               ' which you were born.',
             },
             'is_admin': {
                 'label': 'Administrative rights',
@@ -231,7 +230,9 @@ class TestModelForm(BaseDBCase):
         self.assertEqual(form.age.label.text, 'Age')
 
         self.assertEqual(form.city.label.text, 'City')
-        self.assertEqual(form.city.description, 'The city in which you live, not the one in which you were born.')
+        self.assertEqual(
+            form.city.description,
+            'The city in which you live, not the one in which you were born.')
 
         self.assertEqual(form.is_admin.label.text, 'Administrative rights')
 
@@ -264,21 +265,27 @@ class TestGeoFields(TestCase):
         self.assertFalse(form.validate())
 
 
-class TestReferencePropertyField(BaseDBCase):
+class TestReferencePropertyField(DBTestCase):
     nosegae_datastore_v3 = True
 
     def build_form(self, reference_class=Author, **kw):
         class BookForm(Form):
-            author = ReferencePropertyField(reference_class=reference_class, **kw)
+            author = ReferencePropertyField(
+                reference_class=reference_class,
+                **kw)
         return BookForm
 
     def author_expected(self, selected_index, get_label=lambda x: x.name):
         expected = set()
         for i, author in enumerate(self.authors):
-            expected.add((str(author.key()), get_label(author), i == selected_index))
+            expected.add((str(author.key()),
+                          get_label(author),
+                          i == selected_index))
         return expected
 
     def setUp(self):
+        super(TestReferencePropertyField, self).setUp()
+
         self.authors = fill_authors(Author)
         self.author_names = set(x.name for x in self.authors)
         self.author_ages = set(x.age for x in self.authors)
@@ -288,12 +295,16 @@ class TestReferencePropertyField(BaseDBCase):
             get_label='name'
         )
         form = F()
-        self.assertEqual(set(form.author.iter_choices()), self.author_expected(None))
+        self.assertEqual(
+            set(form.author.iter_choices()),
+            self.author_expected(None))
         assert not form.validate()
 
         form = F(DummyPostData(author=str(self.authors[0].key())))
         assert form.validate()
-        self.assertEqual(set(form.author.iter_choices()), self.author_expected(0))
+        self.assertEqual(
+            set(form.author.iter_choices()),
+            self.author_expected(0))
 
     def test_not_in_query(self):
         F = self.build_form()

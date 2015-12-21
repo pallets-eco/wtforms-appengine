@@ -2,15 +2,16 @@ from __future__ import unicode_literals
 
 # This needs to stay as the first import, it sets up paths.
 from gaetest_common import DummyPostData, fill_authors
+from base import NDBTestCase
 
 from google.appengine.ext import ndb
-from unittest import TestCase
 from wtforms import Form, TextField, IntegerField, BooleanField
 from wtforms.compat import text_type
 from wtforms_appengine.fields import JsonPropertyField, KeyPropertyField
 from wtforms_appengine.ndb import model_form
 
 import second_ndb_module
+
 
 class Author(ndb.Model):
     name = ndb.StringProperty(required=True)
@@ -22,7 +23,8 @@ class Author(ndb.Model):
 class Book(ndb.Model):
     author = ndb.KeyProperty(kind=Author)
 
-class TestJsonPropertyField(TestCase):
+
+class TestJsonPropertyField(NDBTestCase):
     nosegae_datastore_v3 = True
 
     class F(Form):
@@ -42,13 +44,16 @@ class TestJsonPropertyField(TestCase):
         # Test that we get back the same structure we serialized
         self.assertEqual(test_data, form2.field.data)
 
-class TestKeyPropertyField(TestCase):
+
+class TestKeyPropertyField(NDBTestCase):
     nosegae_datastore_v3 = True
 
     class F(Form):
         author = KeyPropertyField(reference_class=Author)
 
     def setUp(self):
+        super(TestKeyPropertyField, self).setUp()
+
         self.authors = fill_authors(Author)
         self.first_author_id = self.authors[0].key.id()
 
@@ -82,14 +87,20 @@ class TestKeyPropertyField(TestCase):
         assert all(x[2] is False for x in form.author.iter_choices())
 
 
-class TestModelForm(TestCase):
+class TestModelForm(NDBTestCase):
     nosegae_datastore_v3 = True
 
-    EXPECTED_AUTHOR = [('name', TextField), ('city', TextField), ('age', IntegerField), ('is_admin', BooleanField)]
+    EXPECTED_AUTHOR = [
+        ('name', TextField),
+        ('city', TextField),
+        ('age', IntegerField),
+        ('is_admin', BooleanField)]
 
     def test_author(self):
         form = model_form(Author)
-        for (expected_name, expected_type), field in zip(self.EXPECTED_AUTHOR, form()):
+        zipped = zip(self.EXPECTED_AUTHOR, form())
+
+        for (expected_name, expected_type), field in zipped:
             self.assertEqual(field.name, expected_name)
             self.assertEqual(type(field), expected_type)
 
