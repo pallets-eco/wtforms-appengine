@@ -52,13 +52,31 @@ class KeyPropertyField(fields.SelectFieldBase):
         self._set_data(None)
 
         if reference_class is not None:
-            self.query = query or reference_class.query()
+            query = query or reference_class.query()
+        self._set_query(query)
+
+    def _set_query(self, query):
+        # Evaluate and set the query value, so we don't iterate and call
+        # the query multiple times.
+        self.query = query.fetch()
+
+    @staticmethod
+    def _key_value(key):
+        """
+        Get's the form-friendly representation of the ndb.Key.
+        """
+        # n.b. Possible security concern here as urlsafe() exposes
+        # *all* the detail about the instance. But it's also the only
+        # way to reliably record ancestor information, and ID values in
+        # a typesafe manner.
+        # Possible fix: Hash the value of urlsafe
+        return key.urlsafe()
 
     def _get_data(self):
         if self._formdata is not None:
             for obj in self.query:
-                if obj.key.urlsafe() == self._formdata:
-                    self._set_data(obj)
+                if self._key_value(obj.key) == self._formdata:
+                    self._set_data(obj.key)
                     break
         return self._data
 
@@ -73,15 +91,11 @@ class KeyPropertyField(fields.SelectFieldBase):
             yield ('__None', self.blank_text, self.data is None)
 
         for obj in self.query:
-            key = obj.key.urlsafe()
+            key = self._key_value(obj.key)
             label = self.get_label(obj)
             yield (key,
                    label,
-                   (self.data.key == obj.key) if self.data else False)
-
-    def process_data(self, data):
-        if data:
-            self.data = data.get()
+                   (self.data == obj.key) if self.data else False)
 
     def process_formdata(self, valuelist):
         if valuelist:
@@ -94,7 +108,7 @@ class KeyPropertyField(fields.SelectFieldBase):
     def pre_validate(self, form):
         if self.data is not None:
             for obj in self.query:
-                if self.data.key == obj.key:
+                if self.data == obj.key:
                     break
             else:
                 raise ValueError(self.gettext('Not a valid choice'))
@@ -102,25 +116,19 @@ class KeyPropertyField(fields.SelectFieldBase):
             raise ValueError(self.gettext('Not a valid choice'))
 
     def populate_obj(self, obj, name):
-        if self.data:
-            setattr(obj, name, self.data.key)
-        else:
-            setattr(obj, name, None)
+        setattr(obj, name, self.data)
 
 
 class SelectMultipleMixin(object):
     widget = widgets.Select(multiple=True)
 
     def iter_choices(self):
-        if self.data:
-            data_keys = [obj.key for obj in self.data if obj is not None]
-        else:
-            data_keys = []
+        data = self.data or []
 
         for obj in self.query:
-            key = obj.key.urlsafe()
+            key = self._key_value(obj.key)
             label = self.get_label(obj)
-            selected = obj.key in data_keys
+            selected = obj.key in data
             yield (key, label, selected)
 
     def process_data(self, value):
@@ -135,7 +143,7 @@ class SelectMultipleMixin(object):
 
     def pre_validate(self, form):
         if self.data:
-            values = list(self.query)
+            values = [x.key for x in self.query]
             for d in self.data:
                 if d not in values:
                     raise ValueError(
@@ -143,7 +151,8 @@ class SelectMultipleMixin(object):
 
     def _get_data(self):
         if self._formdata is not None:
-            m = {obj.key.urlsafe(): obj for obj in self.query}
+            # If _key_value returns a hashed object
+            m = {self._key_value(obj.key): obj.key for obj in self.query}
             self._set_data([m.get(x, x) for x in self._formdata])
         return self._data
 
@@ -154,10 +163,7 @@ class SelectMultipleMixin(object):
     data = property(_get_data, _set_data)
 
     def populate_obj(self, obj, name):
-        if self.data:
-            setattr(obj, name, [x.key for x in self.data if x is not None])
-        else:
-            setattr(obj, name, [])
+        setattr(obj, name, self.data or [])
 
 
 class RepeatedKeyPropertyField(SelectMultipleMixin, KeyPropertyField):
@@ -175,24 +181,7 @@ class PrefetchedKeyPropertyField(KeyPropertyField):
     """
     widget = widgets.Select()
 
-    def __init__(self, label=None, validators=None, reference_class=None,
-                 query=None, get_label=None, allow_blank=False, blank_text='',
-                 **kwargs):
-        super(KeyPropertyField, self).__init__(label, validators, **kwargs)
-        if get_label is None:
-            self.get_label = lambda x: x
-        elif isinstance(get_label, basestring):
-            self.get_label = operator.attrgetter(get_label)
-        else:
-            self.get_label = get_label
-
-        self.allow_blank = allow_blank
-        self.blank_text = blank_text
-        self._set_data(None)
-
-        if reference_class is not None and not query:
-            query = reference_class.query()
-
+    def _set_query(self, query):
         self._query = query.fetch_async()
 
     @property

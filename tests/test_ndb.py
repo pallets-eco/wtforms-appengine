@@ -1,5 +1,7 @@
 from __future__ import unicode_literals
 
+from itertools import product
+
 # This needs to stay as the first import, it sets up paths.
 from gaetest_common import DummyPostData, fill_authors, NDBTestCase
 
@@ -12,6 +14,7 @@ from wtforms_appengine.fields import \
     KeyPropertyField, \
     RepeatedKeyPropertyField,\
     PrefetchedKeyPropertyField,\
+    RepeatedPrefetchedKeyPropertyField,\
     JsonPropertyField
 
 from wtforms_appengine.ndb import model_form
@@ -23,6 +26,36 @@ ndb.utils.DEBUG = False
 
 
 GENRES = ['sci-fi', 'fantasy', 'other']
+
+
+class AncestorModel(ndb.Model):
+    sort = ndb.IntegerProperty()
+
+    @classmethod
+    def generate(cls):
+        """
+        Generate a bunch of instances that could be confused with each
+        other.
+
+        e.g.
+        Key('AncestorModel', 1)
+        Key('AncestorModel', 1, 'AncestorModel', 1)
+        Key('AncestorModel', 1, 'AncestorModel', '1')
+        Key('AncestorModel', '1')
+        Key('AncestorModel', '1', 'AncestorModel', 1)
+        Key('AncestorModel', '1', 'AncestorModel', '1')
+        """
+        ids = [1, '1', 2, '2']  # int(1) and str(1) are different ID's
+
+        for i, parent in enumerate(ids):
+            cls(id=parent, sort=-i).put()
+
+        for i, (parent, child) in enumerate(product(ids, repeat=2)):
+            parent_key = ndb.Key(cls._get_kind(), parent)
+            cls(parent=parent_key, id=child, sort=i).put()
+
+    def __unicode__(self):
+        return repr(self.key.flat())
 
 
 class Address(ndb.Model):
@@ -71,27 +104,32 @@ class TestKeyPropertyField(NDBTestCase):
     def test_no_data(self):
         form = self.get_form()
 
-        assert not form.validate()
+        assert not form.validate(), "Form was valid"
+
         ichoices = list(form.author.iter_choices())
         self.assertEqual(len(ichoices), len(self.authors))
         for author, (key, label, selected) in zip(self.authors, ichoices):
-            self.assertEqual(key, author.key.urlsafe())
+            self.assertEqual(key, KeyPropertyField._key_value(author.key))
 
-    def test_form_data(self):
+    def test_valid_form_data(self):
         # Valid data
-        form = self.get_form(
-            DummyPostData(author=self.first_author_key.urlsafe()))
+        data = DummyPostData(
+            author=KeyPropertyField._key_value(self.first_author_key))
+
+        form = self.get_form(data)
 
         assert form.validate(), "Form validation failed. %r" % form.errors
 
+        # Check that our first author was selected
         ichoices = list(form.author.iter_choices())
         self.assertEqual(len(ichoices), len(self.authors))
         self.assertEqual(list(x[2] for x in ichoices), [True, False, False])
 
-        # Bogus Data
+        self.assertEqual(form.author.data, self.first_author_key)
+
+    def test_invalid_form_data(self):
         form = self.get_form(DummyPostData(author='fooflaf'))
         assert not form.validate()
-        print list(form.author.iter_choices())
         assert all(x[2] is False for x in form.author.iter_choices())
 
     def test_obj_data(self):
@@ -107,6 +145,8 @@ class TestKeyPropertyField(NDBTestCase):
 
         str(form['author'])
 
+        self.assertEqual(form.author.data, author.key)
+
     def test_populate_obj(self):
         author = Author.query().get()
         book = Book(author=author.key)
@@ -117,6 +157,31 @@ class TestKeyPropertyField(NDBTestCase):
         book2 = Book()
         form.populate_obj(book2)
         self.assertEqual(book2.author, author.key)
+
+    def test_ancestors(self):
+        """
+        Test that we support queries that return instances with ancestors.
+
+        Additionally, test that when we have instances with near-identical
+        ID's, (i.e. int vs str) we don't mix them up.
+        """
+        AncestorModel.generate()
+
+        class F(Form):
+            empty = KeyPropertyField(reference_class=AncestorModel)
+
+        bound_form = F()
+
+        # Iter through all of the options, and make sure that we
+        # haven't returned a similar key.
+        for choice_value, choice_label, selected in \
+                bound_form['empty'].iter_choices():
+
+            data_form = F(DummyPostData(empty=choice_value))
+            assert data_form.validate()
+
+            instance = data_form['empty'].data.get()
+            self.assertEqual(unicode(instance), choice_label)
 
 
 class TestRepeatedKeyPropertyField(NDBTestCase):
@@ -142,9 +207,15 @@ class TestRepeatedKeyPropertyField(NDBTestCase):
             self.assertFalse(selected)
             self.assertEqual(key, author.key.urlsafe())
 
+        # Should this return None, or an empty list? AppEngine won't
+        # accept None in a repeated property.
+        # self.assertEqual(form.authors.data, [])
+
     def test_empty_form(self):
         form = self.get_form(DummyPostData(authors=[]))
+
         self.assertTrue(form.validate())
+        self.assertEqual(form.authors.data, [])
 
         inst = Collab()
         form.populate_obj(inst)
@@ -152,12 +223,16 @@ class TestRepeatedKeyPropertyField(NDBTestCase):
 
     def test_values(self):
         data = DummyPostData(authors=[
-            self.first_author_key.urlsafe(),
-            self.second_author_key.urlsafe()])
+            RepeatedKeyPropertyField._key_value(self.first_author_key),
+            RepeatedKeyPropertyField._key_value(self.second_author_key)])
 
         form = self.get_form(data)
 
         assert form.validate(), "Form validation failed. %r" % form.errors
+        self.assertEqual(
+            form.authors.data,
+            [self.first_author_key,
+             self.second_author_key])
 
         inst = Collab()
         form.populate_obj(inst)
@@ -167,9 +242,16 @@ class TestRepeatedKeyPropertyField(NDBTestCase):
              self.second_author_key])
 
     def test_bad_value(self):
-        data = DummyPostData(authors=['foo'])
+        data = DummyPostData(authors=[
+            'foo',
+            RepeatedKeyPropertyField._key_value(self.first_author_key)])
+
         form = self.get_form(data)
+
         self.assertFalse(form.validate())
+
+        # What should the data of an invalid field be?
+        # self.assertEqual(form.authors.data, None)
 
 
 class TestPrefetchedKeyPropertyField(TestKeyPropertyField):
@@ -178,6 +260,16 @@ class TestPrefetchedKeyPropertyField(TestKeyPropertyField):
 
         class F(Form):
             author = PrefetchedKeyPropertyField(query=q)
+
+        return F(*args, **kwargs)
+
+
+class TestRepeatedPrefetchedKeyPropertyField(TestRepeatedKeyPropertyField):
+    def get_form(self, *args, **kwargs):
+        q = Author.query().order(Author.name)
+
+        class F(Form):
+            authors = RepeatedPrefetchedKeyPropertyField(query=q)
 
         return F(*args, **kwargs)
 
