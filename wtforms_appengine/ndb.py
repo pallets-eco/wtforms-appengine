@@ -93,7 +93,12 @@ class:
 """
 from wtforms import Form, validators, fields as f
 from wtforms.compat import string_types
-from .fields import GeoPtPropertyField, JsonPropertyField, KeyPropertyField, StringListPropertyField, IntegerListPropertyField
+from .fields import (GeoPtPropertyField,
+                     JsonPropertyField,
+                     KeyPropertyField,
+                     RepeatedKeyPropertyField,
+                     StringListPropertyField,
+                     IntegerListPropertyField)
 
 
 def get_TextField(kwargs):
@@ -145,16 +150,18 @@ class ModelConverterBase(object):
 
         prop_type_name = type(prop).__name__
 
-        #check for generic property
+        # check for generic property
         if(prop_type_name == "GenericProperty"):
-            #try to get type from field args
+            # try to get type from field args
             generic_type = field_args.get("type")
             if generic_type:
                 prop_type_name = field_args.get("type")
-            #if no type is found, the generic property uses string set in convert_GenericProperty
+            # if no type is found, the generic property uses string set in
+            # convert_GenericProperty
 
         kwargs = {
-            'label': prop._verbose_name or prop._code_name.replace('_', ' ').title(),
+            'label': (prop._verbose_name or
+                      prop._code_name.replace('_', ' ').title()),
             'default': prop._default,
             'validators': [],
         }
@@ -164,15 +171,14 @@ class ModelConverterBase(object):
         if prop._required and prop_type_name not in self.NO_AUTO_REQUIRED:
             kwargs['validators'].append(validators.required())
 
-        if kwargs.get('choices', None):
+        choices = kwargs.get('choices', None) or prop._choices
+        if choices:
             # Use choices in a select field.
-            kwargs['choices'] = [(v, v) for v in kwargs.get('choices')]
-            return f.SelectField(**kwargs)
-
-        if prop._choices:
-            # Use choices in a select field.
-            kwargs['choices'] = [(v, v) for v in prop._choices]
-            return f.SelectField(**kwargs)
+            kwargs['choices'] = [(v, v) for v in choices]
+            if prop._repeated:
+                return f.SelectMultipleField(**kwargs)
+            else:
+                return f.SelectField(**kwargs)
 
         else:
             converter = self.converters.get(prop_type_name, None)
@@ -232,9 +238,13 @@ class ModelConverter(ModelConverterBase):
     | ComputedProperty   | none              |              | always skipped   |
     +====================+===================+==============+==================+
 
-    """
+    """  # noqa
+
     # Don't automatically add a required validator for these properties
-    NO_AUTO_REQUIRED = frozenset(['ListProperty', 'StringListProperty', 'BooleanProperty'])
+    NO_AUTO_REQUIRED = frozenset([
+        'ListProperty',
+        'StringListProperty',
+        'BooleanProperty'])
 
     def convert_StringProperty(self, model, prop, kwargs):
         """Returns a form field for a ``ndb.StringProperty``."""
@@ -324,7 +334,8 @@ class ModelConverter(ModelConverterBase):
 
     def convert_KeyProperty(self, model, prop, kwargs):
         """Returns a form field for a ``ndb.KeyProperty``."""
-        if 'reference_class' not in kwargs:
+        if 'reference_class' not in kwargs\
+                or 'query' not in kwargs:
             try:
                 reference_class = prop._kind
             except AttributeError:
@@ -335,12 +346,17 @@ class ModelConverter(ModelConverterBase):
                 try:
                     reference_class = model._kind_map[reference_class]
                 except KeyError:
-                    # If it's not imported, just bail, as we can't edit this field safely.
+                    # If it's not imported, just bail, as we can't
+                    # edit this field safely.
                     return None
             kwargs['reference_class'] = reference_class
-        kwargs.setdefault('allow_blank', not prop._required)
-        return KeyPropertyField(**kwargs)
 
+        kwargs.setdefault('allow_blank', not prop._required)
+
+        if prop._repeated:
+            return RepeatedKeyPropertyField(**kwargs)
+        else:
+            return KeyPropertyField(**kwargs)
 
 
 def model_fields(model, only=None, exclude=None, field_args=None,
@@ -370,7 +386,8 @@ def model_fields(model, only=None, exclude=None, field_args=None,
     # Get the field names we want to include or exclude, starting with the
     # full list of model properties.
     props = model._properties
-    field_names = list(x[0] for x in sorted(props.items(), key=lambda x: x[1]._creation_counter))
+    field_names = [x[0] for x in
+                   sorted(props.items(), key=lambda x: x[1]._creation_counter)]
 
     if only:
         field_names = list(f for f in only if f in field_names)
@@ -387,8 +404,8 @@ def model_fields(model, only=None, exclude=None, field_args=None,
     return field_dict
 
 
-def model_form(model, base_class=Form, only=None, exclude=None, field_args=None,
-               converter=None):
+def model_form(model, base_class=Form, only=None, exclude=None,
+               field_args=None, converter=None):
     """
     Creates and returns a dynamic ``wtforms.Form`` class for a given
     ``ndb.Model`` class. The form class can be used as it is or serve as a base

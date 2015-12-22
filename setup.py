@@ -32,5 +32,7 @@ setup(
     },
     install_requires=['WTForms>=1.0.5'],
     extras_require={
-    }
+    },
+    test_suite='nose.collector',
+    tests_require=['nose'],
 )

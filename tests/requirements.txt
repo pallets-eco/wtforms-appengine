@@ -1,4 +1,4 @@
 coverage
 nose
-NoseGAE
 WTForms>=1.0.5
+nosegae
