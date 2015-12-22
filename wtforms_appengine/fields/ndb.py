@@ -184,7 +184,7 @@ class PrefetchedKeyPropertyField(KeyPropertyField):
     """
     widget = widgets.Select()
 
-    def _set_query(self, query):
+    def set_query(self, query):
         self._query = query.fetch_async()
 
     @property

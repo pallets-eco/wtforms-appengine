@@ -1,5 +1,7 @@
 from __future__ import unicode_literals
 
+from wtforms.compat import text_type
+
 from itertools import product
 
 # This needs to stay as the first import, it sets up paths.
@@ -19,7 +21,7 @@ from wtforms_appengine.fields import \
 
 from wtforms_appengine.ndb import model_form
 
-# import second_ndb_module
+import second_ndb_module
 
 # Silence NDB logging
 ndb.utils.DEBUG = False
@@ -324,6 +326,14 @@ class TestModelForm(NDBTestCase):
             keys.add(key)
 
         self.assertEqual(authors, keys)
+
+    def test_second_book(self):
+        authors = set(text_type(x.key.id()) for x in fill_authors(Author))
+        authors.add('__None')
+        form = model_form(second_ndb_module.SecondBook)
+        keys = set()
+        for key, b, c in form().author.iter_choices():
+            keys.add(key)
 
     def test_choices(self):
         form = model_form(Author)
