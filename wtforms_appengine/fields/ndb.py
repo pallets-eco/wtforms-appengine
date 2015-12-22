@@ -67,6 +67,8 @@ class KeyPropertyField(fields.SelectFieldBase):
     def _key_value(key):
         """
         Get's the form-friendly representation of the ndb.Key.
+
+	This should return a hashable object (such as a string).
         """
         # n.b. Possible security concern here as urlsafe() exposes
         # *all* the detail about the instance. But it's also the only
@@ -154,7 +156,6 @@ class SelectMultipleMixin(object):
 
     def _get_data(self):
         if self._formdata is not None:
-            # If _key_value returns a hashed object
             m = {self._key_value(obj.key): obj.key for obj in self.query}
             self._set_data([m.get(x, x) for x in self._formdata])
         return self._data
