@@ -150,16 +150,18 @@ class ModelConverterBase(object):
 
         prop_type_name = type(prop).__name__
 
-        #check for generic property
+        # check for generic property
         if(prop_type_name == "GenericProperty"):
-            #try to get type from field args
+            # try to get type from field args
             generic_type = field_args.get("type")
             if generic_type:
                 prop_type_name = field_args.get("type")
-            #if no type is found, the generic property uses string set in convert_GenericProperty
+            # if no type is found, the generic property uses string set in
+            # convert_GenericProperty
 
         kwargs = {
-            'label': prop._verbose_name or prop._code_name.replace('_', ' ').title(),
+            'label': (prop._verbose_name or
+                      prop._code_name.replace('_', ' ').title()),
             'default': prop._default,
             'validators': [],
         }
@@ -169,7 +171,7 @@ class ModelConverterBase(object):
         if prop._required and prop_type_name not in self.NO_AUTO_REQUIRED:
             kwargs['validators'].append(validators.required())
 
-        choices = kwargs.get('chocies', None) or prop._choices
+        choices = kwargs.get('choices', None) or prop._choices
         if choices:
             # Use choices in a select field.
             kwargs['choices'] = [(v, v) for v in choices]
@@ -236,9 +238,13 @@ class ModelConverter(ModelConverterBase):
     | ComputedProperty   | none              |              | always skipped   |
     +====================+===================+==============+==================+
 
-    """
+    """  # noqa
+
     # Don't automatically add a required validator for these properties
-    NO_AUTO_REQUIRED = frozenset(['ListProperty', 'StringListProperty', 'BooleanProperty'])
+    NO_AUTO_REQUIRED = frozenset([
+        'ListProperty',
+        'StringListProperty',
+        'BooleanProperty'])
 
     def convert_StringProperty(self, model, prop, kwargs):
         """Returns a form field for a ``ndb.StringProperty``."""
@@ -340,7 +346,8 @@ class ModelConverter(ModelConverterBase):
                 try:
                     reference_class = model._kind_map[reference_class]
                 except KeyError:
-                    # If it's not imported, just bail, as we can't edit this field safely.
+                    # If it's not imported, just bail, as we can't
+                    # edit this field safely.
                     return None
             kwargs['reference_class'] = reference_class
 
@@ -350,7 +357,6 @@ class ModelConverter(ModelConverterBase):
             return RepeatedKeyPropertyField(**kwargs)
         else:
             return KeyPropertyField(**kwargs)
-
 
 
 def model_fields(model, only=None, exclude=None, field_args=None,
@@ -380,7 +386,8 @@ def model_fields(model, only=None, exclude=None, field_args=None,
     # Get the field names we want to include or exclude, starting with the
     # full list of model properties.
     props = model._properties
-    field_names = list(x[0] for x in sorted(props.items(), key=lambda x: x[1]._creation_counter))
+    field_names = [x[0] for x in
+                   sorted(props.items(), key=lambda x: x[1]._creation_counter)]
 
     if only:
         field_names = list(f for f in only if f in field_names)
@@ -397,8 +404,8 @@ def model_fields(model, only=None, exclude=None, field_args=None,
     return field_dict
 
 
-def model_form(model, base_class=Form, only=None, exclude=None, field_args=None,
-               converter=None):
+def model_form(model, base_class=Form, only=None, exclude=None,
+               field_args=None, converter=None):
     """
     Creates and returns a dynamic ``wtforms.Form`` class for a given
     ``ndb.Model`` class. The form class can be used as it is or serve as a base

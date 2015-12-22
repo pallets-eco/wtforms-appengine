@@ -8,16 +8,15 @@ from google.appengine.ext import ndb
 from wtforms import Form, TextField, IntegerField, BooleanField, \
     SelectField, SelectMultipleField, FormField, FieldList
 
-from wtforms.compat import text_type
-
 from wtforms_appengine.fields import \
     KeyPropertyField, \
     RepeatedKeyPropertyField,\
-    PrefetchedKeyPropertyField
+    PrefetchedKeyPropertyField,\
+    JsonPropertyField
 
 from wtforms_appengine.ndb import model_form
 
-import second_ndb_module
+# import second_ndb_module
 
 # Silence NDB logging
 ndb.utils.DEBUG = False
@@ -137,7 +136,9 @@ class TestRepeatedKeyPropertyField(NDBTestCase):
 
     def test_no_data(self):
         form = self.get_form()
-        for author, (key, label, selected) in zip(self.authors, form.authors.iter_choices()):
+        zipped = zip(self.authors, form.authors.iter_choices())
+
+        for author, (key, label, selected) in zipped:
             self.assertFalse(selected)
             self.assertEqual(key, author.key.urlsafe())
 
@@ -160,9 +161,10 @@ class TestRepeatedKeyPropertyField(NDBTestCase):
 
         inst = Collab()
         form.populate_obj(inst)
-        self.assertEqual(inst.authors,[
-            self.first_author_key,
-            self.second_author_key])
+        self.assertEqual(
+            inst.authors,
+            [self.first_author_key,
+             self.second_author_key])
 
     def test_bad_value(self):
         data = DummyPostData(authors=['foo'])
@@ -172,11 +174,33 @@ class TestRepeatedKeyPropertyField(NDBTestCase):
 
 class TestPrefetchedKeyPropertyField(TestKeyPropertyField):
     def get_form(self, *args, **kwargs):
+        q = Author.query().order(Author.name)
+
         class F(Form):
-            author = PrefetchedKeyPropertyField(
-                    query = Author.query().order(Author.name))
+            author = PrefetchedKeyPropertyField(query=q)
 
         return F(*args, **kwargs)
+
+
+class TestJsonPropertyField(NDBTestCase):
+    nosegae_datastore_v3 = True
+
+    class F(Form):
+        field = JsonPropertyField()
+
+    def test_round_trip(self):
+        # Valid data
+        test_data = {u'a': {'b': 3, 'c': ['a', 1, False]}}
+
+        form = self.F()
+        form.process(data={'field': test_data})
+        raw_string = form.field._value()
+        assert form.validate()
+        form2 = self.F()
+        form2.process(formdata=DummyPostData(field=raw_string))
+        assert form.validate()
+        # Test that we get back the same structure we serialized
+        self.assertEqual(test_data, form2.field.data)
 
 
 class TestModelForm(NDBTestCase):
@@ -215,8 +239,26 @@ class TestModelForm(NDBTestCase):
 
         # Sort both sets of choices. NDB stores the choices as a frozenset
         # and as such, ends up in the wtforms field unsorted.
-        expected = sorted([(v,v) for v in GENRES])
+        expected = sorted([(v, v) for v in GENRES])
 
         self.assertEqual(sorted(bound_form['genre'].choices), expected)
         self.assertEqual(sorted(bound_form['genres'].choices), expected)
+
+    def test_choices_override(self):
+        """
+        Check that when we provide additional choices, they override
+        what was specified, or set choices on the field.
+        """
+        choices = ['Cat', 'Pig', 'Cow', 'Spaghetti']
+        expected = [(x, x) for x in choices]
+
+        form = model_form(Author, field_args={
+            'genres': {'choices': choices},
+            'name': {'choices': choices}})
+
+        bound_form = form()
+
+        # For provided choices, they should be in the provided order
+        self.assertEqual(bound_form['genres'].choices, expected)
+        self.assertEqual(bound_form['name'].choices, expected)
 
