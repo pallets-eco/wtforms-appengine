@@ -275,8 +275,6 @@ class TestRepeatedPrefetchedKeyPropertyField(TestRepeatedKeyPropertyField):
 
 
 class TestJsonPropertyField(NDBTestCase):
-    nosegae_datastore_v3 = True
-
     class F(Form):
         field = JsonPropertyField()
 
