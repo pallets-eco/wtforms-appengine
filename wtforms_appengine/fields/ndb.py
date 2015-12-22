@@ -53,11 +53,14 @@ class KeyPropertyField(fields.SelectFieldBase):
 
         if reference_class is not None:
             query = query or reference_class.query()
-        self._set_query(query)
 
-    def _set_query(self, query):
-        # Evaluate and set the query value, so we don't iterate and call
-        # the query multiple times.
+        if query:
+            self.set_query(query)
+
+    def set_query(self, query):
+        # Evaluate and set the query value
+        # Setting the query manually will still work, but is not advised
+        # as each iteration though it will cause it to be re-evaluated.
         self.query = query.fetch()
 
     @staticmethod

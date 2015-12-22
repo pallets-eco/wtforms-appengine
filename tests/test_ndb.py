@@ -196,6 +196,8 @@ class TestRepeatedKeyPropertyField(NDBTestCase):
 
     def get_form(self, *args, **kwargs):
         form = self.F(*args, **kwargs)
+        # See comment on KeyPropertyField.set_query as to why this is
+        # bad practice.
         form.authors.query = Author.query().order(Author.name)
         return form
 
