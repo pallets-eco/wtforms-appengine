@@ -27,6 +27,7 @@ setup(
     ],
     packages=[
         'wtforms_appengine',
+        'wtforms_appengine.fields',
     ],
     package_data={
     },
