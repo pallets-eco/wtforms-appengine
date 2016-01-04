@@ -1,5 +1,5 @@
 from codecs import open
-from setuptools import setup
+from setuptools import setup, find_packages
 
 setup(
     name='WTForms-Appengine',
@@ -25,10 +25,7 @@ setup(
         'Topic :: Internet :: WWW/HTTP :: Dynamic Content',
         'Topic :: Software Development :: Libraries :: Python Modules'
     ],
-    packages=[
-        'wtforms_appengine',
-        'wtforms_appengine.fields',
-    ],
+    packages=find_packages(),
     package_data={
     },
     install_requires=['WTForms>=1.0.5'],
