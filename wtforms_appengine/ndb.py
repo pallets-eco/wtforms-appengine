@@ -236,6 +236,8 @@ class ModelConverter(ModelConverterBase):
     | GenericProperty    | None              | generic      | always skipped   |
     +--------------------+-------------------+--------------+------------------+
     | ComputedProperty   | none              |              | always skipped   |
+    +--------------------+-------------------+--------------+------------------+
+    | _ClassKeyProperty  | none              |              | always skipped   |
     +====================+===================+==============+==================+
 
     """  # noqa
@@ -358,6 +360,9 @@ class ModelConverter(ModelConverterBase):
         else:
             return KeyPropertyField(**kwargs)
 
+    def convert__ClassKeyProperty(self, model, prop, kwargs):
+            """Returns a form field for a ``ndb.ComputedProperty``."""
+            return None
 
 def model_fields(model, only=None, exclude=None, field_args=None,
                  converter=None):
