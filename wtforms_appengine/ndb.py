@@ -107,7 +107,7 @@ def get_TextField(kwargs):
     of 500 bytes.
     """
     kwargs['validators'].append(validators.length(max=500))
-    return f.TextField(**kwargs)
+    return f.StringField(**kwargs)
 
 
 def get_IntegerField(kwargs):
@@ -169,7 +169,7 @@ class ModelConverterBase(object):
             kwargs.update(field_args)
 
         if prop._required and prop_type_name not in self.NO_AUTO_REQUIRED:
-            kwargs['validators'].append(validators.required())
+            kwargs['validators'].append(validators.DataRequired())
 
         choices = kwargs.get('choices', None) or prop._choices
         if choices:
@@ -197,14 +197,14 @@ class ModelConverter(ModelConverterBase):
     +====================+===================+==============+==================+
     | Property subclass  | Field subclass    | datatype     | notes            |
     +====================+===================+==============+==================+
-    | StringProperty     | TextField         | unicode      | TextArea         | repeated support
+    | StringProperty     | StringField       | unicode      | TextArea         | repeated support
     |                    |                   |              | if multiline     |
     +--------------------+-------------------+--------------+------------------+
     | BooleanProperty    | BooleanField      | bool         |                  |
     +--------------------+-------------------+--------------+------------------+
     | IntegerProperty    | IntegerField      | int or long  |                  | repeated support
     +--------------------+-------------------+--------------+------------------+
-    | FloatProperty      | TextField         | float        |                  |
+    | FloatProperty      | StringField       | float        |                  |
     +--------------------+-------------------+--------------+------------------+
     | DateTimeProperty   | DateTimeField     | datetime     | skipped if       |
     |                    |                   |              | auto_now[_add]   |
@@ -217,7 +217,7 @@ class ModelConverter(ModelConverterBase):
     +--------------------+-------------------+--------------+------------------+
     | TextProperty       | TextAreaField     | unicode      |                  |
     +--------------------+-------------------+--------------+------------------+
-    | GeoPtProperty      | TextField         | db.GeoPt     |                  |
+    | GeoPtProperty      | StringField       | db.GeoPt     |                  |
     +--------------------+-------------------+--------------+------------------+
     | KeyProperty        | KeyProperyField   | ndb.Key      |                  |
     +--------------------+-------------------+--------------+------------------+

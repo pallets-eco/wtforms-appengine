@@ -9,7 +9,7 @@ from gaetest_common import DummyPostData, fill_authors, NDBTestCase
 
 from google.appengine.ext import ndb
 
-from wtforms import Form, TextField, IntegerField, BooleanField, \
+from wtforms import Form, StringField, IntegerField, BooleanField, \
     SelectField, SelectMultipleField, FormField, FieldList
 
 from wtforms_appengine.fields import \
@@ -299,8 +299,8 @@ class TestJsonPropertyField(NDBTestCase):
 
 class TestModelForm(NDBTestCase):
     EXPECTED_AUTHOR = [
-        ('name', TextField),
-        ('city', TextField),
+        ('name', StringField),
+        ('city', StringField),
         ('age', IntegerField),
         ('is_admin', BooleanField),
         ('genre', SelectField),
