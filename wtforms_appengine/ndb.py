@@ -155,7 +155,8 @@ class ModelConverterBase:
         # check for generic property
         if prop_type_name == "GenericProperty":
             # try to get type from field args
-            generic_type = field_args.get("type")
+            generic_type = field_args.get("type") if field_args else None
+
             if generic_type:
                 prop_type_name = field_args.get("type")
             # if no type is found, the generic property uses string set in
