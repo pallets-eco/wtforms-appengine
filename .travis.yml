@@ -27,12 +27,12 @@ before_install:
   - bash install.sh --disable-prompts --install-dir=${HOME}
   - source ${HOME}/google-cloud-sdk/path.bash.inc
   - gcloud --quiet components update
-  - gcloud components install cloud-datastore-emulator
-  - gcloud components install beta
-  - gcloud components install appctl
-  - gcloud components install cloud-build-local
-  - gcloud components install app-engine-python
-  - gcloud components install app-engine-python-extras
+  - gcloud --quiet components install cloud-datastore-emulator
+  - gcloud --quiet components install beta
+  - gcloud --quiet components install appctl
+  - gcloud --quiet components install cloud-build-local
+  - gcloud --quiet components install app-engine-python
+  - gcloud --quiet components install app-engine-python-extras
 
 # command to install dependencies
 install:
