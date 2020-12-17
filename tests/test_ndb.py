@@ -1,15 +1,13 @@
-from __future__ import unicode_literals
-
 from wtforms.compat import text_type
 
 from itertools import product
 
 # This needs to stay as the first import, it sets up paths.
-from gaetest_common import DummyPostData, fill_authors, NDBTestCase
+from .gaetest_common import DummyPostData, fill_authors
 
-from google.appengine.ext import ndb
+from google.cloud import ndb
 
-from wtforms import Form, TextField, IntegerField, BooleanField, \
+from wtforms import Form, StringField, IntegerField, BooleanField, \
     SelectField, SelectMultipleField, FormField, FieldList
 
 from wtforms_appengine.fields import \
@@ -21,11 +19,10 @@ from wtforms_appengine.fields import \
 
 from wtforms_appengine.ndb import model_form
 
-import second_ndb_module
+from . import second_ndb_module
 
 # Silence NDB logging
 ndb.utils.DEBUG = False
-
 
 GENRES = ['sci-fi', 'fantasy', 'other']
 
@@ -89,12 +86,11 @@ class Collab(ndb.Model):
     authors = ndb.KeyProperty(kind=Author, repeated=True)
 
 
-class TestKeyPropertyField(NDBTestCase):
+class TestKeyPropertyField:
     class F(Form):
         author = KeyPropertyField(reference_class=Author)
 
     def setUp(self):
-        super(TestKeyPropertyField, self).setUp()
         self.authors = fill_authors(Author)
         self.first_author_key = self.authors[0].key
 
@@ -103,95 +99,105 @@ class TestKeyPropertyField(NDBTestCase):
         form.author.query = Author.query().order(Author.name)
         return form
 
-    def test_no_data(self):
-        form = self.get_form()
+    def test_no_data(self, client):
+        with client.context():
+            self.setUp()
+            form = self.get_form()
+            assert not form.validate(), "Form was valid"
 
-        assert not form.validate(), "Form was valid"
+            ichoices = list(form.author.iter_choices())
 
-        ichoices = list(form.author.iter_choices())
-        self.assertEqual(len(ichoices), len(self.authors))
-        for author, (key, label, selected) in zip(self.authors, ichoices):
-            self.assertEqual(key, KeyPropertyField._key_value(author.key))
+            assert len(ichoices) == len(self.authors)
+            for author, (key, label, selected) in zip(self.authors, ichoices):
+                assert key == KeyPropertyField._key_value(author.key)
 
-    def test_valid_form_data(self):
-        # Valid data
-        data = DummyPostData(
-            author=KeyPropertyField._key_value(self.first_author_key))
+    def test_valid_form_data(self, client):
+        with client.context():
+            self.setUp()
+            # Valid data
+            data = DummyPostData(
+                author=KeyPropertyField._key_value(self.first_author_key))
 
-        form = self.get_form(data)
+            form = self.get_form(data)
+            assert form.validate(), "Form validation failed. %r" % form.errors
 
-        assert form.validate(), "Form validation failed. %r" % form.errors
+            # Check that our first author was selected
+            ichoices = list(form.author.iter_choices())
 
-        # Check that our first author was selected
-        ichoices = list(form.author.iter_choices())
-        self.assertEqual(len(ichoices), len(self.authors))
-        self.assertEqual(list(x[2] for x in ichoices), [True, False, False])
+            assert len(ichoices) == len(self.authors)
+            assert [x[2] for x in ichoices] == [True, False, False]
 
-        self.assertEqual(form.author.data, self.first_author_key)
+            assert form.author.data == self.first_author_key
 
-    def test_invalid_form_data(self):
-        form = self.get_form(DummyPostData(author='fooflaf'))
-        assert not form.validate()
-        assert all(x[2] is False for x in form.author.iter_choices())
+    def test_invalid_form_data(self, client):
+        with client.context():
+            self.setUp()
+            form = self.get_form(DummyPostData(author='fooflaf'))
+            assert not form.validate()
+            assert all(x[2] is False for x in form.author.iter_choices())
 
-    def test_obj_data(self):
+    def test_obj_data(self, client):
         """
         When creating a form from an object, check that the form will render
         (hint: it didn't before)
         """
-        author = Author.query().get()
-        book = Book(author=author.key)
-        book.put()
+        with client.context():
+            self.setUp()
+            author = Author.query().get()
+            book = Book(author=author.key)
+            book.put()
 
-        form = self.F(DummyPostData(), book)
+            form = self.F(DummyPostData(), book)
 
-        str(form['author'])
+            str(form.author)
 
-        self.assertEqual(form.author.data, author.key)
+        assert form.author.data == author.key
 
-    def test_populate_obj(self):
-        author = Author.query().get()
-        book = Book(author=author.key)
-        book.put()
+    def test_populate_obj(self, client):
+        with client.context():
+            self.setUp()
+            author = Author.query().get()
+            book = Book(author=author.key)
+            book.put()
 
-        form = self.F(DummyPostData(), book)
+            form = self.F(DummyPostData(), book)
 
-        book2 = Book()
-        form.populate_obj(book2)
-        self.assertEqual(book2.author, author.key)
+            book2 = Book()
+            form.populate_obj(book2)
+        assert book2.author == author.key
 
-    def test_ancestors(self):
+    def test_ancestors(self, client):
         """
         Test that we support queries that return instances with ancestors.
 
         Additionally, test that when we have instances with near-identical
         ID's, (i.e. int vs str) we don't mix them up.
         """
-        AncestorModel.generate()
+        with client.context():
+            AncestorModel.generate()
 
-        class F(Form):
-            empty = KeyPropertyField(reference_class=AncestorModel)
+            class F(Form):
+                empty = KeyPropertyField(reference_class=AncestorModel)
 
-        bound_form = F()
+            bound_form = F()
 
-        # Iter through all of the options, and make sure that we
-        # haven't returned a similar key.
-        for choice_value, choice_label, selected in \
-                bound_form['empty'].iter_choices():
+            # Iter through all of the options, and make sure that we
+            # haven't returned a similar key.
+            for choice_value, choice_label, selected in \
+                    bound_form.empty.iter_choices():
 
-            data_form = F(DummyPostData(empty=choice_value))
-            assert data_form.validate()
+                data_form = F(DummyPostData(empty=choice_value))
+                assert data_form.validate()
 
-            instance = data_form['empty'].data.get()
-            self.assertEqual(unicode(instance), choice_label)
+                instance = data_form.empty.data.get()
+                assert str(instance) == choice_label
 
 
-class TestRepeatedKeyPropertyField(NDBTestCase):
+class TestRepeatedKeyPropertyField:
     class F(Form):
         authors = RepeatedKeyPropertyField(reference_class=Author)
 
     def setUp(self):
-        super(TestRepeatedKeyPropertyField, self).setUp()
         self.authors = fill_authors(Author)
         self.first_author_key = self.authors[0].key
         self.second_author_key = self.authors[1].key
@@ -203,59 +209,60 @@ class TestRepeatedKeyPropertyField(NDBTestCase):
         form.authors.query = Author.query().order(Author.name)
         return form
 
-    def test_no_data(self):
-        form = self.get_form()
-        zipped = zip(self.authors, form.authors.iter_choices())
+    def test_no_data(self, client):
+        with client.context():
+            self.setUp()
+            form = self.get_form()
+            zipped = zip(self.authors, form.authors.iter_choices())
 
-        for author, (key, label, selected) in zipped:
-            self.assertFalse(selected)
-            self.assertEqual(key, author.key.urlsafe())
+            for author, (key, label, selected) in zipped:
+                assert selected is False
+                assert key == author.key.urlsafe()
 
         # Should this return None, or an empty list? AppEngine won't
         # accept None in a repeated property.
-        # self.assertEqual(form.authors.data, [])
+        # assert form.authors.data == []
 
-    def test_empty_form(self):
-        form = self.get_form(DummyPostData(authors=[]))
+    def test_empty_form(self, client):
+        with client.context():
+            self.setUp()
+            form = self.get_form(DummyPostData(authors=[]))
+            assert form.validate() is True
 
-        self.assertTrue(form.validate())
-        self.assertEqual(form.authors.data, [])
+            assert form.authors.data == []
 
-        inst = Collab()
-        form.populate_obj(inst)
-        self.assertEqual(inst.authors, [])
+            inst = Collab()
+            form.populate_obj(inst)
+            assert inst.authors == []
 
-    def test_values(self):
-        data = DummyPostData(authors=[
-            RepeatedKeyPropertyField._key_value(self.first_author_key),
-            RepeatedKeyPropertyField._key_value(self.second_author_key)])
+    def test_values(self, client):
+        with client.context():
+            self.setUp()
+            data = DummyPostData(authors=[
+                RepeatedKeyPropertyField._key_value(self.first_author_key),
+                RepeatedKeyPropertyField._key_value(self.second_author_key)])
 
-        form = self.get_form(data)
+            form = self.get_form(data)
+            assert form.validate(), "Form validation failed. %r" % form.errors
+            authors = [self.first_author_key, self.second_author_key]
+            assert form.authors.data == authors
 
-        assert form.validate(), "Form validation failed. %r" % form.errors
-        self.assertEqual(
-            form.authors.data,
-            [self.first_author_key,
-             self.second_author_key])
+            inst = Collab()
+            form.populate_obj(inst)
+            assert inst.authors == [self.first_author_key, self.second_author_key]
 
-        inst = Collab()
-        form.populate_obj(inst)
-        self.assertEqual(
-            inst.authors,
-            [self.first_author_key,
-             self.second_author_key])
+    def test_bad_value(self, client):
+        with client.context():
+            self.setUp()
+            data = DummyPostData(authors=[
+                'foo',
+                RepeatedKeyPropertyField._key_value(self.first_author_key)])
 
-    def test_bad_value(self):
-        data = DummyPostData(authors=[
-            'foo',
-            RepeatedKeyPropertyField._key_value(self.first_author_key)])
+            form = self.get_form(data)
+            assert form.validate() is False
 
-        form = self.get_form(data)
-
-        self.assertFalse(form.validate())
-
-        # What should the data of an invalid field be?
-        # self.assertEqual(form.authors.data, None)
+            # What should the data of an invalid field be?
+            # assert form.authors.data is None
 
 
 class TestPrefetchedKeyPropertyField(TestKeyPropertyField):
@@ -278,7 +285,7 @@ class TestRepeatedPrefetchedKeyPropertyField(TestRepeatedKeyPropertyField):
         return F(*args, **kwargs)
 
 
-class TestJsonPropertyField(NDBTestCase):
+class TestJsonPropertyField:
     class F(Form):
         field = JsonPropertyField()
 
@@ -294,48 +301,54 @@ class TestJsonPropertyField(NDBTestCase):
         form2.process(formdata=DummyPostData(field=raw_string))
         assert form.validate()
         # Test that we get back the same structure we serialized
-        self.assertEqual(test_data, form2.field.data)
+        assert test_data == form2.field.data
 
 
-class TestModelForm(NDBTestCase):
+class TestModelForm:
     EXPECTED_AUTHOR = [
-        ('name', TextField),
-        ('city', TextField),
         ('age', IntegerField),
-        ('is_admin', BooleanField),
+        ('city', StringField),
         ('genre', SelectField),
         ('genres', SelectMultipleField),
+        ('is_admin', BooleanField),
+        ('name', StringField),
         ('address', FormField),
         ('address_history', FieldList),
     ]
 
-    def test_author(self):
-        form = model_form(Author)
-        zipped = zip(self.EXPECTED_AUTHOR, form())
+    def test_author(self, client):
+        with client.context():
+            form = model_form(Author)
+        x = form()
+        zipped = zip(self.EXPECTED_AUTHOR, x)
 
         for (expected_name, expected_type), field in zipped:
-            self.assertEqual(field.name, expected_name)
-            self.assertEqual(type(field), expected_type)
+            assert field.name == expected_name
+            assert type(field) == expected_type
 
-    def test_book(self):
-        authors = set(x.key.urlsafe() for x in fill_authors(Author))
-        authors.add('__None')
-        form = model_form(Book)
-        keys = set()
-        for key, b, c in form().author.iter_choices():
-            keys.add(key)
+    def test_book(self, client):
+        with client.context():
+            authors = set(x.key.urlsafe() for x in fill_authors(Author))
+            authors.add('__None')
+            form = model_form(Book)
+            keys = set()
+            for key, b, c in form().author.iter_choices():
+                keys.add(key)
 
-        self.assertEqual(authors, keys)
+        assert authors == keys
 
-    def test_second_book(self):
-        authors = set(text_type(x.key.id()) for x in fill_authors(Author))
-        authors.add('__None')
-        form = model_form(second_ndb_module.SecondBook)
-        keys = set()
-        for key, b, c in form().author.iter_choices():
-            keys.add(key)
+    def test_second_book(self, client):
+        with client.context():
+            authors = set(text_type(x.key.id()) for x in fill_authors(Author))
+            authors.add('__None')
+            form = model_form(second_ndb_module.SecondBook)
+            keys = set()
+            for key, b, c in form().author.iter_choices():
+                keys.add(key)
 
-    def test_choices(self):
+        assert authors != keys
+
+    def test_choices(self, client):
         form = model_form(Author)
         bound_form = form()
 
@@ -343,8 +356,8 @@ class TestModelForm(NDBTestCase):
         # and as such, ends up in the wtforms field unsorted.
         expected = sorted([(v, v) for v in GENRES])
 
-        self.assertEqual(sorted(bound_form['genre'].choices), expected)
-        self.assertEqual(sorted(bound_form['genres'].choices), expected)
+        assert sorted(bound_form.genre.choices) == expected
+        assert sorted(bound_form.genres.choices) == expected
 
     def test_choices_override(self):
         """
@@ -361,6 +374,5 @@ class TestModelForm(NDBTestCase):
         bound_form = form()
 
         # For provided choices, they should be in the provided order
-        self.assertEqual(bound_form['genres'].choices, expected)
-        self.assertEqual(bound_form['name'].choices, expected)
-
+        assert bound_form.genres.choices == expected
+        assert bound_form.name.choices == expected

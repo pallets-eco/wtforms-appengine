@@ -101,13 +101,13 @@ from .fields import (GeoPtPropertyField,
                      IntegerListPropertyField)
 
 
-def get_TextField(kwargs):
+def get_StringField(kwargs):
     """
-    Returns a ``TextField``, applying the ``ndb.StringProperty`` length limit
+    Returns a ``StringField``, applying the ``ndb.StringProperty`` length limit
     of 500 bytes.
     """
     kwargs['validators'].append(validators.length(max=500))
-    return f.TextField(**kwargs)
+    return f.StringField(**kwargs)
 
 
 def get_IntegerField(kwargs):
@@ -160,8 +160,8 @@ class ModelConverterBase(object):
             # convert_GenericProperty
 
         kwargs = {
-            'label': (prop._verbose_name or
-                      prop._code_name.replace('_', ' ').title()),
+            'label': (prop._verbose_name
+                or prop._code_name.replace('_', ' ').title()),
             'default': prop._default,
             'validators': [],
         }
@@ -169,7 +169,7 @@ class ModelConverterBase(object):
             kwargs.update(field_args)
 
         if prop._required and prop_type_name not in self.NO_AUTO_REQUIRED:
-            kwargs['validators'].append(validators.required())
+            kwargs['validators'].append(validators.DataRequired())
 
         choices = kwargs.get('choices', None) or prop._choices
         if choices:
@@ -197,14 +197,14 @@ class ModelConverter(ModelConverterBase):
     +====================+===================+==============+==================+
     | Property subclass  | Field subclass    | datatype     | notes            |
     +====================+===================+==============+==================+
-    | StringProperty     | TextField         | unicode      | TextArea         | repeated support
+    | StringProperty     | StringField         | unicode      | TextArea         | repeated support
     |                    |                   |              | if multiline     |
     +--------------------+-------------------+--------------+------------------+
     | BooleanProperty    | BooleanField      | bool         |                  |
     +--------------------+-------------------+--------------+------------------+
     | IntegerProperty    | IntegerField      | int or long  |                  | repeated support
     +--------------------+-------------------+--------------+------------------+
-    | FloatProperty      | TextField         | float        |                  |
+    | FloatProperty      | StringField         | float        |                  |
     +--------------------+-------------------+--------------+------------------+
     | DateTimeProperty   | DateTimeField     | datetime     | skipped if       |
     |                    |                   |              | auto_now[_add]   |
@@ -217,7 +217,7 @@ class ModelConverter(ModelConverterBase):
     +--------------------+-------------------+--------------+------------------+
     | TextProperty       | TextAreaField     | unicode      |                  |
     +--------------------+-------------------+--------------+------------------+
-    | GeoPtProperty      | TextField         | db.GeoPt     |                  |
+    | GeoPtProperty      | StringField         | db.GeoPt     |                  |
     +--------------------+-------------------+--------------+------------------+
     | KeyProperty        | KeyProperyField   | ndb.Key      |                  |
     +--------------------+-------------------+--------------+------------------+
@@ -253,7 +253,7 @@ class ModelConverter(ModelConverterBase):
         if prop._repeated:
             return StringListPropertyField(**kwargs)
         kwargs['validators'].append(validators.length(max=500))
-        return get_TextField(kwargs)
+        return get_StringField(kwargs)
 
     def convert_BooleanProperty(self, model, prop, kwargs):
         """Returns a form field for a ``ndb.BooleanProperty``."""
@@ -316,7 +316,7 @@ class ModelConverter(ModelConverterBase):
     def convert_GenericProperty(self, model, prop, kwargs):
         """Returns a form field for a ``ndb.GenericProperty``."""
         kwargs['validators'].append(validators.length(max=500))
-        return get_TextField(kwargs)
+        return get_StringField(kwargs)
 
     def convert_BlobKeyProperty(self, model, prop, kwargs):
         """Returns a form field for a ``ndb.BlobKeyProperty``."""
@@ -361,8 +361,9 @@ class ModelConverter(ModelConverterBase):
             return KeyPropertyField(**kwargs)
 
     def convert__ClassKeyProperty(self, model, prop, kwargs):
-            """Returns a form field for a ``ndb.ComputedProperty``."""
-            return None
+        """Returns a form field for a ``ndb.ComputedProperty``."""
+        return None
+
 
 def model_fields(model, only=None, exclude=None, field_args=None,
                  converter=None):
@@ -391,8 +392,7 @@ def model_fields(model, only=None, exclude=None, field_args=None,
     # Get the field names we want to include or exclude, starting with the
     # full list of model properties.
     props = model._properties
-    field_names = [x[0] for x in
-                   sorted(props.items(), key=lambda x: x[1]._creation_counter)]
+    field_names = [x[0] for x in props.items()]
 
     if only:
         field_names = list(f for f in only if f in field_names)
