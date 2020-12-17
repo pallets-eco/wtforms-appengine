@@ -11,16 +11,16 @@ before_install:
   - source ${HOME}/venv/bin/activate
 
   # Install CA certs, openssl to https downloads, python for gcloud sdk
-  - apt-get install make ca-certificates openssl python
-  - update-ca-certificates
+  - sudo apt-get install make ca-certificates openssl python
+  - sudo update-ca-certificates
 
   # Install Java
   - wget -qO - https://adoptopenjdk.jfrog.io/adoptopenjdk/api/gpg/key/public | apt-key add -
-  - apt-get update
-  - apt-get install -y software-properties-common
-  - add-apt-repository --yes https://adoptopenjdk.jfrog.io/adoptopenjdk/deb/
-  - apt-get update
-  - apt-get install -y adoptopenjdk-8-hotspot
+  - sudo apt-get update
+  - sudo apt-get install -y software-properties-common
+  - sudo add-apt-repository --yes https://adoptopenjdk.jfrog.io/adoptopenjdk/deb/
+  - sudo apt-get -q update
+  - sudo apt-get install -y adoptopenjdk-8-hotspot
 
   # Download the latest version of the GAE Python SDK
   - curl https://sdk.cloud.google.com > install.sh
