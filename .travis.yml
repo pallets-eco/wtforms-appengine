@@ -1,10 +1,11 @@
 language: python
 python:
-  - 2.7
+  - 3.6
+  - 3.7
+  - 3.8
 
 # command to install dependencies
 install:
-  - "pip install ."
   - "pip install -r tests/requirements.txt"
   # Download the latest version of the GAE Python SDK
   - "wget https://storage.googleapis.com/appengine-sdks/featured/google_appengine_1.9.30.zip -nv -O downloaded_appengine.zip"
@@ -14,7 +15,7 @@ install:
   - "rm -rf google_appengine/lib/fancy_urllib/__init__.py"
 
 # command to run tests
-script: "coverage run --source=wtforms_appengine `which nosetests` -w tests --with-gae --gae-lib-root=google_appengine"
+script: "pytest --cov wtforms_appengine tests"
 
 after_success:
   - pip install coveralls
