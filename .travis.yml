@@ -15,7 +15,7 @@ before_install:
   - sudo update-ca-certificates
 
   # Install Java
-  - wget -qO - https://adoptopenjdk.jfrog.io/adoptopenjdk/api/gpg/key/public | apt-key add -
+  - sudo wget -qO - https://adoptopenjdk.jfrog.io/adoptopenjdk/api/gpg/key/public | apt-key add -
   - sudo apt-get update
   - sudo apt-get install -y software-properties-common
   - sudo add-apt-repository --yes https://adoptopenjdk.jfrog.io/adoptopenjdk/deb/
