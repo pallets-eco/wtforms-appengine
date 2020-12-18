@@ -190,6 +190,7 @@ class ModelConverterBase(object):
 
 
 class ModelConverter(ModelConverterBase):
+    from google.cloud.ndb import model
     """
     Converts properties from a ``ndb.Model`` class to form fields.
 
@@ -205,7 +206,7 @@ class ModelConverter(ModelConverterBase):
     +--------------------+-------------------+--------------+------------------+
     | IntegerProperty    | IntegerField      | int or long  |                  | repeated support
     +--------------------+-------------------+--------------+------------------+
-    | FloatProperty      | StringField         | float        |                  |
+    | FloatProperty      | StringField       | float        |                  |
     +--------------------+-------------------+--------------+------------------+
     | DateTimeProperty   | DateTimeField     | datetime     | skipped if       |
     |                    |                   |              | auto_now[_add]   |
@@ -218,7 +219,7 @@ class ModelConverter(ModelConverterBase):
     +--------------------+-------------------+--------------+------------------+
     | TextProperty       | TextAreaField     | unicode      |                  |
     +--------------------+-------------------+--------------+------------------+
-    | GeoPtProperty      | StringField         | db.GeoPt     |                  |
+    | GeoPtProperty      | StringField       | db.GeoPt     |                  |
     +--------------------+-------------------+--------------+------------------+
     | KeyProperty        | KeyProperyField   | ndb.Key      |                  |
     +--------------------+-------------------+--------------+------------------+

@@ -15,7 +15,11 @@ from wtforms_appengine.fields import \
     RepeatedKeyPropertyField,\
     PrefetchedKeyPropertyField,\
     RepeatedPrefetchedKeyPropertyField,\
-    JsonPropertyField
+    JsonPropertyField, \
+    StringListPropertyField, \
+    GeoPtPropertyField, \
+    IntegerListPropertyField, \
+    ReferencePropertyField
 
 from wtforms_appengine.ndb import model_form
 
@@ -376,3 +380,96 @@ class TestModelForm:
         # For provided choices, they should be in the provided order
         assert bound_form.genres.choices == expected
         assert bound_form.name.choices == expected
+
+
+class TestGeoFields:
+    class GeoTestForm(Form):
+        geo = GeoPtPropertyField()
+
+    def test_geopt_property(self):
+        form = self.GeoTestForm(DummyPostData(geo='5.0, -7.0'))
+        assert form.validate()
+        assert form.geo.data == '5.0,-7.0'
+        form = self.GeoTestForm(DummyPostData(geo='5.0,-f'))
+        assert not form.validate()
+
+
+class TestReferencePropertyField:
+    nosegae_datastore_v3 = True
+
+    def build_form(self, reference_class=Author, **kw):
+        class BookForm(Form):
+            author = ReferencePropertyField(
+                reference_class=reference_class,
+                **kw)
+        return BookForm
+
+    def author_expected(self, selected_index=None, get_label=lambda x: x.name):
+        expected = set()
+        for i, author in enumerate(self.authors):
+            expected.add((author.key.urlsafe(),
+                          get_label(author),
+                          i == selected_index))
+        return expected
+
+    def setUp(self):
+        self.authors = fill_authors(Author)
+        self.author_names = set(x.name for x in self.authors)
+        self.author_ages = set(x.age for x in self.authors)
+
+    def test_basic(self, client):
+        with client.context():
+            self.setUp()
+            F = self.build_form(
+                get_label='name'
+            )
+            form = F()
+            assert set(form.author.iter_choices()) == self.author_expected()
+            assert not form.validate()
+
+            form = F(DummyPostData(author=str(self.authors[0].key)))
+            assert form.validate()
+            # What we want to validate here?
+            # assert set(form.author.iter_choices()) == self.author_expected(0)
+
+    def test_not_in_query(self, client):
+        with client.context():
+            self.setUp()
+            F = self.build_form()
+            new_author = Author(name='Jim', age=48)
+            new_author.put()
+            form = F(author=new_author)
+            form.author.query = Author.query().filter(Author.name != 'Jim')
+            assert form.author.data is new_author
+            assert not form.validate()
+
+    def test_get_label_func(self, client):
+        with client.context():
+            self.setUp()
+            get_age = lambda x: x.age
+            F = self.build_form(get_label=get_age)
+            form = F()
+            ages = set(x.label.text for x in form.author)
+            assert ages == self.author_ages
+
+    def test_allow_blank(self, client):
+        with client.context():
+            self.setUp()
+            F = self.build_form(allow_blank=True, get_label='name')
+            form = F(DummyPostData(author='__None'))
+            assert form.validate()
+            assert form.author.data is None
+            expected = self.author_expected()
+            expected.add(('__None', '', True))
+            assert set(form.author.iter_choices()) == expected
+
+
+class TestStringListPropertyField:
+    class F(Form):
+        a = StringListPropertyField()
+
+    def test_basic(self, client):
+        with client.context():
+            form = self.F(DummyPostData(a='foo\nbar\nbaz'))
+            assert form.a.data == ['foo', 'bar', 'baz']
+            assert form.a._value() == 'foo\nbar\nbaz'
