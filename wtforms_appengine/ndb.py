@@ -410,7 +410,13 @@ def model_fields(model, only=None, exclude=None, field_args=None, converter=None
 
 
 def model_form(
-    model, base_class=Form, only=None, exclude=None, field_args=None, converter=None
+    model,
+    base_class=Form,
+    only=None,
+    exclude=None,
+    field_args=None,
+    converter=None,
+    extra_fields=None,
 ):
     """
     Creates and returns a dynamic ``wtforms.Form`` class for a given
@@ -437,6 +443,9 @@ def model_form(
     """
     # Extract the fields from the model.
     field_dict = model_fields(model, only, exclude, field_args, converter)
+
+    if extra_fields:
+        field_dict.update(extra_fields)
 
     # Return a dynamically created form class, extending from base_class and
     # including the created fields as properties.
