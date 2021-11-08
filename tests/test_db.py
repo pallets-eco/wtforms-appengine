@@ -89,8 +89,8 @@ class TestModelForm(DBTestCase):
         self.assertEqual(hasattr(form_class, "is_admin"), True)
 
         form = form_class()
-        self.assertEqual(isinstance(form.name, f.TextField), True)
-        self.assertEqual(isinstance(form.city, f.TextField), True)
+        self.assertEqual(isinstance(form.name, f.StringField), True)
+        self.assertEqual(isinstance(form.city, f.StringField), True)
         self.assertEqual(isinstance(form.age, f.IntegerField), True)
         self.assertEqual(isinstance(form.is_admin, f.BooleanField), True)
 
@@ -121,7 +121,7 @@ class TestModelForm(DBTestCase):
         self.assertEqual(hasattr(form_class, "is_admin"), False)
 
         form = form_class()
-        self.assertEqual(isinstance(form.name, f.TextField), True)
+        self.assertEqual(isinstance(form.name, f.StringField), True)
         self.assertEqual(isinstance(form.age, f.IntegerField), True)
 
     def test_model_form_exclude(self):
@@ -133,8 +133,8 @@ class TestModelForm(DBTestCase):
         self.assertEqual(hasattr(form_class, "is_admin"), False)
 
         form = form_class()
-        self.assertEqual(isinstance(form.name, f.TextField), True)
-        self.assertEqual(isinstance(form.city, f.TextField), True)
+        self.assertEqual(isinstance(form.name, f.StringField), True)
+        self.assertEqual(isinstance(form.city, f.StringField), True)
         self.assertEqual(isinstance(form.age, f.IntegerField), True)
 
     def test_datetime_model(self):

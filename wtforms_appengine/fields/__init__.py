@@ -6,7 +6,7 @@ from .db import *
 from .ndb import *
 
 
-class GeoPtPropertyField(fields.TextField):
+class GeoPtPropertyField(fields.StringField):
     def process_formdata(self, valuelist):
         if valuelist:
             try:

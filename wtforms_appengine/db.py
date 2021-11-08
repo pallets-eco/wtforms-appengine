@@ -94,21 +94,19 @@ class:
 from wtforms import fields as f
 from wtforms import Form
 from wtforms import validators
-from wtforms import widgets
-from wtforms.compat import iteritems
 
 from .fields import GeoPtPropertyField
 from .fields import ReferencePropertyField
 from .fields import StringListPropertyField
 
 
-def get_TextField(kwargs):
+def get_StringField(kwargs):
     """
-    Returns a ``TextField``, applying the ``db.StringProperty`` length limit
+    Returns a ``StringField``, applying the ``db.StringProperty`` length limit
     of 500 bytes.
     """
     kwargs["validators"].append(validators.length(max=500))
-    return f.TextField(**kwargs)
+    return f.StringField(**kwargs)
 
 
 def get_IntegerField(kwargs):
@@ -127,12 +125,12 @@ def convert_StringProperty(model, prop, kwargs):
         kwargs["validators"].append(validators.length(max=500))
         return f.TextAreaField(**kwargs)
     else:
-        return get_TextField(kwargs)
+        return get_StringField(kwargs)
 
 
 def convert_ByteStringProperty(model, prop, kwargs):
     """Returns a form field for a ``db.ByteStringProperty``."""
-    return get_TextField(kwargs)
+    return get_StringField(kwargs)
 
 
 def convert_BooleanProperty(model, prop, kwargs):
@@ -216,19 +214,19 @@ def convert_TextProperty(model, prop, kwargs):
 
 def convert_CategoryProperty(model, prop, kwargs):
     """Returns a form field for a ``db.CategoryProperty``."""
-    return get_TextField(kwargs)
+    return get_StringField(kwargs)
 
 
 def convert_LinkProperty(model, prop, kwargs):
     """Returns a form field for a ``db.LinkProperty``."""
     kwargs["validators"].append(validators.url())
-    return get_TextField(kwargs)
+    return get_StringField(kwargs)
 
 
 def convert_EmailProperty(model, prop, kwargs):
     """Returns a form field for a ``db.EmailProperty``."""
     kwargs["validators"].append(validators.email())
-    return get_TextField(kwargs)
+    return get_StringField(kwargs)
 
 
 def convert_GeoPtProperty(model, prop, kwargs):
@@ -243,12 +241,12 @@ def convert_IMProperty(model, prop, kwargs):
 
 def convert_PhoneNumberProperty(model, prop, kwargs):
     """Returns a form field for a ``db.PhoneNumberProperty``."""
-    return get_TextField(kwargs)
+    return get_StringField(kwargs)
 
 
 def convert_PostalAddressProperty(model, prop, kwargs):
     """Returns a form field for a ``db.PostalAddressProperty``."""
-    return get_TextField(kwargs)
+    return get_StringField(kwargs)
 
 
 def convert_RatingProperty(model, prop, kwargs):
@@ -266,16 +264,16 @@ class ModelConverter:
     +====================+===================+==============+==================+
     | Property subclass  | Field subclass    | datatype     | notes            |
     +====================+===================+==============+==================+
-    | StringProperty     | TextField         | unicode      | TextArea         |
+    | StringProperty     | StringField         | unicode      | TextArea         |
     |                    |                   |              | if multiline     |
     +--------------------+-------------------+--------------+------------------+
-    | ByteStringProperty | TextField         | str          |                  |
+    | ByteStringProperty | StringField         | str          |                  |
     +--------------------+-------------------+--------------+------------------+
     | BooleanProperty    | BooleanField      | bool         |                  |
     +--------------------+-------------------+--------------+------------------+
     | IntegerProperty    | IntegerField      | int or long  |                  |
     +--------------------+-------------------+--------------+------------------+
-    | FloatProperty      | TextField         | float        |                  |
+    | FloatProperty      | StringField         | float        |                  |
     +--------------------+-------------------+--------------+------------------+
     | DateTimeProperty   | DateTimeField     | datetime     | skipped if       |
     |                    |                   |              | auto_now[_add]   |
@@ -300,19 +298,19 @@ class ModelConverter:
     +--------------------+-------------------+--------------+------------------+
     | TextProperty       | TextAreaField     | unicode      |                  |
     +--------------------+-------------------+--------------+------------------+
-    | CategoryProperty   | TextField         | unicode      |                  |
+    | CategoryProperty   | StringField         | unicode      |                  |
     +--------------------+-------------------+--------------+------------------+
-    | LinkProperty       | TextField         | unicode      |                  |
+    | LinkProperty       | StringField         | unicode      |                  |
     +--------------------+-------------------+--------------+------------------+
-    | EmailProperty      | TextField         | unicode      |                  |
+    | EmailProperty      | StringField         | unicode      |                  |
     +--------------------+-------------------+--------------+------------------+
-    | GeoPtProperty      | TextField         | db.GeoPt     |                  |
+    | GeoPtProperty      | StringField         | db.GeoPt     |                  |
     +--------------------+-------------------+--------------+------------------+
     | IMProperty         | None              | db.IM        | always skipped   |
     +--------------------+-------------------+--------------+------------------+
-    | PhoneNumberProperty| TextField         | unicode      |                  |
+    | PhoneNumberProperty| StringField         | unicode      |                  |
     +--------------------+-------------------+--------------+------------------+
-    | PostalAddressP.    | TextField         | unicode      |                  |
+    | PostalAddressP.    | StringField         | unicode      |                  |
     +--------------------+-------------------+--------------+------------------+
     | RatingProperty     | IntegerField      | int or long  |                  |
     +--------------------+-------------------+--------------+------------------+
@@ -421,7 +419,9 @@ def model_fields(model, only=None, exclude=None, field_args=None, converter=None
     # Get the field names we want to include or exclude, starting with the
     # full list of model properties.
     props = model.properties()
-    sorted_props = sorted(iteritems(props), key=lambda prop: prop[1].creation_counter)
+    sorted_props = sorted(
+        iter(props.items()), key=lambda prop: prop[1].creation_counter
+    )
     field_names = list(x[0] for x in sorted_props)
 
     if only:

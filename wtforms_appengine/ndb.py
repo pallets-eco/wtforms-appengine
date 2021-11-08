@@ -94,7 +94,6 @@ class:
 from wtforms import fields as f
 from wtforms import Form
 from wtforms import validators
-from wtforms.compat import string_types
 
 from .fields import GeoPtPropertyField
 from .fields import IntegerListPropertyField
@@ -104,13 +103,13 @@ from .fields import RepeatedKeyPropertyField
 from .fields import StringListPropertyField
 
 
-def get_TextField(kwargs):
+def get_StringField(kwargs):
     """
-    Returns a ``TextField``, applying the ``ndb.StringProperty`` length limit
+    Returns a ``StringField``, applying the ``ndb.StringProperty`` length limit
     of 500 bytes.
     """
     kwargs["validators"].append(validators.length(max=500))
-    return f.TextField(**kwargs)
+    return f.StringField(**kwargs)
 
 
 def get_IntegerField(kwargs):
@@ -199,14 +198,14 @@ class ModelConverter(ModelConverterBase):
     +====================+===================+==============+==================+
     | Property subclass  | Field subclass    | datatype     | notes            |
     +====================+===================+==============+==================+
-    | StringProperty     | TextField         | unicode      | TextArea         | repeated support
+    | StringProperty     | StringField         | unicode      | TextArea         | repeated support
     |                    |                   |              | if multiline     |
     +--------------------+-------------------+--------------+------------------+
     | BooleanProperty    | BooleanField      | bool         |                  |
     +--------------------+-------------------+--------------+------------------+
     | IntegerProperty    | IntegerField      | int or long  |                  | repeated support
     +--------------------+-------------------+--------------+------------------+
-    | FloatProperty      | TextField         | float        |                  |
+    | FloatProperty      | StringField         | float        |                  |
     +--------------------+-------------------+--------------+------------------+
     | DateTimeProperty   | DateTimeField     | datetime     | skipped if       |
     |                    |                   |              | auto_now[_add]   |
@@ -219,7 +218,7 @@ class ModelConverter(ModelConverterBase):
     +--------------------+-------------------+--------------+------------------+
     | TextProperty       | TextAreaField     | unicode      |                  |
     +--------------------+-------------------+--------------+------------------+
-    | GeoPtProperty      | TextField         | db.GeoPt     |                  |
+    | GeoPtProperty      | StringField         | db.GeoPt     |                  |
     +--------------------+-------------------+--------------+------------------+
     | KeyProperty        | KeyProperyField   | ndb.Key      |                  |
     +--------------------+-------------------+--------------+------------------+
@@ -254,7 +253,7 @@ class ModelConverter(ModelConverterBase):
         if prop._repeated:
             return StringListPropertyField(**kwargs)
         kwargs["validators"].append(validators.length(max=500))
-        return get_TextField(kwargs)
+        return get_StringField(kwargs)
 
     def convert_BooleanProperty(self, model, prop, kwargs):
         """Returns a form field for a ``ndb.BooleanProperty``."""
@@ -317,7 +316,7 @@ class ModelConverter(ModelConverterBase):
     def convert_GenericProperty(self, model, prop, kwargs):
         """Returns a form field for a ``ndb.GenericProperty``."""
         kwargs["validators"].append(validators.length(max=500))
-        return get_TextField(kwargs)
+        return get_StringField(kwargs)
 
     def convert_BlobKeyProperty(self, model, prop, kwargs):
         """Returns a form field for a ``ndb.BlobKeyProperty``."""
@@ -343,7 +342,7 @@ class ModelConverter(ModelConverterBase):
             except AttributeError:
                 reference_class = prop._reference_class
 
-            if isinstance(reference_class, string_types):
+            if isinstance(reference_class, str):
                 # This assumes that the referenced module is already imported.
                 try:
                     reference_class = model._kind_map[reference_class]

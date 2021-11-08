@@ -3,7 +3,6 @@ import operator
 
 from wtforms import fields
 from wtforms import widgets
-from wtforms.compat import text_type
 
 __all__ = [
     "KeyPropertyField",
@@ -43,7 +42,7 @@ class KeyPropertyField(fields.SelectFieldBase):
         label=None,
         validators=None,
         reference_class=None,
-        get_label=text_type,
+        get_label=str,
         allow_blank=False,
         blank_text="",
         query=None,

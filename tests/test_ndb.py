@@ -18,8 +18,7 @@ from wtforms import FormField
 from wtforms import IntegerField
 from wtforms import SelectField
 from wtforms import SelectMultipleField
-from wtforms import TextField
-from wtforms.compat import text_type
+from wtforms import StringField
 
 # This needs to stay as the first import, it sets up paths.
 
@@ -296,8 +295,8 @@ class TestJsonPropertyField(NDBTestCase):
 
 class TestModelForm(NDBTestCase):
     EXPECTED_AUTHOR = [
-        ("name", TextField),
-        ("city", TextField),
+        ("name", StringField),
+        ("city", StringField),
         ("age", IntegerField),
         ("is_admin", BooleanField),
         ("genre", SelectField),
@@ -325,7 +324,7 @@ class TestModelForm(NDBTestCase):
         self.assertEqual(authors, keys)
 
     def test_second_book(self):
-        authors = {text_type(x.key.id()) for x in fill_authors(Author)}
+        authors = {str(x.key.id()) for x in fill_authors(Author)}
         authors.add("__None")
         form = model_form(second_ndb_module.SecondBook)
         keys = set()

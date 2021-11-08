@@ -2,8 +2,6 @@ import operator
 
 from wtforms import fields
 from wtforms import widgets
-from wtforms.compat import string_types
-from wtforms.compat import text_type
 
 __all__ = [
     "ReferencePropertyField",
@@ -48,7 +46,7 @@ class ReferencePropertyField(fields.SelectFieldBase):
         super().__init__(label, validators, **kwargs)
         if get_label is None:
             self.get_label = lambda x: x
-        elif isinstance(get_label, string_types):
+        elif isinstance(get_label, str):
             self.get_label = operator.attrgetter(get_label)
         else:
             self.get_label = get_label
@@ -113,7 +111,7 @@ class StringListPropertyField(fields.TextAreaField):
         if self.raw_data:
             return self.raw_data[0]
         else:
-            return self.data and text_type("\n".join(self.data)) or ""
+            return self.data and str("\n".join(self.data)) or ""
 
     def process_formdata(self, valuelist):
         if valuelist:
@@ -133,7 +131,7 @@ class IntegerListPropertyField(fields.TextAreaField):
         if self.raw_data:
             return self.raw_data[0]
         else:
-            return text_type("\n".join(self.data)) if self.data else ""
+            return str("\n".join(self.data)) if self.data else ""
 
     def process_formdata(self, valuelist):
         if valuelist:
