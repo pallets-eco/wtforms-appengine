@@ -15,6 +15,7 @@ from wtforms import IntegerField
 from wtforms import SelectField
 from wtforms import SelectMultipleField
 from wtforms import StringField
+
 from . import second_ndb_module
 from .gaetest_common import DummyPostData
 from .gaetest_common import fill_authors
@@ -109,7 +110,7 @@ class TestKeyPropertyField(NDBTestCase):
 
         ichoices = list(form.author.iter_choices())
         self.assertEqual(len(ichoices), len(self.authors))
-        for author, (key, label, selected) in zip(self.authors, ichoices):
+        for author, (key, _, _) in zip(self.authors, ichoices):
             self.assertEqual(key, KeyPropertyField._key_value(author.key))
 
     def test_valid_form_data(self):
@@ -174,13 +175,13 @@ class TestKeyPropertyField(NDBTestCase):
 
         # Iter through all of the options, and make sure that we
         # haven't returned a similar key.
-        for choice_value, choice_label, selected in bound_form["empty"].iter_choices():
+        for choice_value, choice_label, _ in bound_form["empty"].iter_choices():
 
             data_form = F(DummyPostData(empty=choice_value))
             assert data_form.validate()
 
             instance = data_form["empty"].data.get()
-            self.assertEqual(unicode(instance), choice_label)
+            self.assertEqual(instance, choice_label)
 
 
 class TestRepeatedKeyPropertyField(NDBTestCase):
@@ -204,7 +205,7 @@ class TestRepeatedKeyPropertyField(NDBTestCase):
         form = self.get_form()
         zipped = zip(self.authors, form.authors.iter_choices())
 
-        for author, (key, label, selected) in zipped:
+        for author, (key, _, selected) in zipped:
             self.assertFalse(selected)
             self.assertEqual(key, author.key.urlsafe())
 
@@ -318,7 +319,7 @@ class TestModelForm(NDBTestCase):
         authors.add("__None")
         form = model_form(Book)
         keys = set()
-        for key, b, c in form().author.iter_choices():
+        for key, _, _ in form().author.iter_choices():
             keys.add(key)
 
         self.assertEqual(authors, keys)
@@ -328,7 +329,7 @@ class TestModelForm(NDBTestCase):
         authors.add("__None")
         form = model_form(second_ndb_module.SecondBook)
         keys = set()
-        for key, b, c in form().author.iter_choices():
+        for key, _, _ in form().author.iter_choices():
             keys.add(key)
 
     def test_choices(self):

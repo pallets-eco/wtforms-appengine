@@ -40,7 +40,10 @@ html_context = {
         ),
         ProjectLink("PyPI Releases", "https://pypi.org/project/WTForms-Appengine/"),
         ProjectLink("Source Code", "https://github.com/wtforms/wtforms-appengine/"),
-        ProjectLink("Discord Chat", "https://discord.gg/F65P7Z9",),
+        ProjectLink(
+            "Discord Chat",
+            "https://discord.gg/F65P7Z9",
+        ),
         ProjectLink(
             "Issue Tracker", "https://github.com/wtforms/wtforms-appengine/issues/"
         ),

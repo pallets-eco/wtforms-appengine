@@ -19,6 +19,7 @@ from google.appengine.ext import db
 from wtforms import fields as f
 from wtforms import Form
 from wtforms import validators
+
 from .gaetest_common import DBTestCase
 from .gaetest_common import DummyPostData
 from .gaetest_common import fill_authors
@@ -246,7 +247,7 @@ class TestModelForm(DBTestCase):
         form_class = model_form(Book)
         form = form_class()
 
-        for key, name, value in form.author.iter_choices():
+        for key, _, _ in form.author.iter_choices():
             assert key in keys
             keys.remove(key)
 
@@ -307,7 +308,9 @@ class TestReferencePropertyField(DBTestCase):
         assert not form.validate()
 
     def test_get_label_func(self):
-        get_age = lambda x: x.age
+        def get_age(x):
+            return x.age
+
         F = self.build_form(get_label=get_age)
         form = F()
         ages = {x.label.text for x in form.author}
