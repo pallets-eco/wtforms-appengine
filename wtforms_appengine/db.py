@@ -264,16 +264,16 @@ class ModelConverter:
     +====================+===================+==============+==================+
     | Property subclass  | Field subclass    | datatype     | notes            |
     +====================+===================+==============+==================+
-    | StringProperty     | StringField         | unicode      | TextArea         |
+    | StringProperty     | StringField       | unicode      | TextArea         |
     |                    |                   |              | if multiline     |
     +--------------------+-------------------+--------------+------------------+
-    | ByteStringProperty | StringField         | str          |                  |
+    | ByteStringProperty | StringField       | str          |                  |
     +--------------------+-------------------+--------------+------------------+
     | BooleanProperty    | BooleanField      | bool         |                  |
     +--------------------+-------------------+--------------+------------------+
     | IntegerProperty    | IntegerField      | int or long  |                  |
     +--------------------+-------------------+--------------+------------------+
-    | FloatProperty      | StringField         | float        |                  |
+    | FloatProperty      | StringField       | float        |                  |
     +--------------------+-------------------+--------------+------------------+
     | DateTimeProperty   | DateTimeField     | datetime     | skipped if       |
     |                    |                   |              | auto_now[_add]   |
@@ -298,19 +298,19 @@ class ModelConverter:
     +--------------------+-------------------+--------------+------------------+
     | TextProperty       | TextAreaField     | unicode      |                  |
     +--------------------+-------------------+--------------+------------------+
-    | CategoryProperty   | StringField         | unicode      |                  |
+    | CategoryProperty   | StringField       | unicode      |                  |
     +--------------------+-------------------+--------------+------------------+
-    | LinkProperty       | StringField         | unicode      |                  |
+    | LinkProperty       | StringField       | unicode      |                  |
     +--------------------+-------------------+--------------+------------------+
-    | EmailProperty      | StringField         | unicode      |                  |
+    | EmailProperty      | StringField       | unicode      |                  |
     +--------------------+-------------------+--------------+------------------+
-    | GeoPtProperty      | StringField         | db.GeoPt     |                  |
+    | GeoPtProperty      | StringField       | db.GeoPt     |                  |
     +--------------------+-------------------+--------------+------------------+
     | IMProperty         | None              | db.IM        | always skipped   |
     +--------------------+-------------------+--------------+------------------+
-    | PhoneNumberProperty| StringField         | unicode      |                  |
+    | PhoneNumberProperty| StringField       | unicode      |                  |
     +--------------------+-------------------+--------------+------------------+
-    | PostalAddressP.    | StringField         | unicode      |                  |
+    | PostalAddressP.    | StringField       | unicode      |                  |
     +--------------------+-------------------+--------------+------------------+
     | RatingProperty     | IntegerField      | int or long  |                  |
     +--------------------+-------------------+--------------+------------------+

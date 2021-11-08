@@ -199,14 +199,14 @@ class ModelConverter(ModelConverterBase):
     +====================+===================+==============+==================+
     | Property subclass  | Field subclass    | datatype     | notes            |
     +====================+===================+==============+==================+
-    | StringProperty     | StringField         | unicode      | TextArea         | repeated support
+    | StringProperty     | StringField       | unicode      | TextArea         | repeated support
     |                    |                   |              | if multiline     |
     +--------------------+-------------------+--------------+------------------+
     | BooleanProperty    | BooleanField      | bool         |                  |
     +--------------------+-------------------+--------------+------------------+
     | IntegerProperty    | IntegerField      | int or long  |                  | repeated support
     +--------------------+-------------------+--------------+------------------+
-    | FloatProperty      | StringField         | float        |                  |
+    | FloatProperty      | StringField       | float        |                  |
     +--------------------+-------------------+--------------+------------------+
     | DateTimeProperty   | DateTimeField     | datetime     | skipped if       |
     |                    |                   |              | auto_now[_add]   |
@@ -219,7 +219,7 @@ class ModelConverter(ModelConverterBase):
     +--------------------+-------------------+--------------+------------------+
     | TextProperty       | TextAreaField     | unicode      |                  |
     +--------------------+-------------------+--------------+------------------+
-    | GeoPtProperty      | StringField         | db.GeoPt     |                  |
+    | GeoPtProperty      | StringField       | db.GeoPt     |                  |
     +--------------------+-------------------+--------------+------------------+
     | KeyProperty        | KeyProperyField   | ndb.Key      |                  |
     +--------------------+-------------------+--------------+------------------+
