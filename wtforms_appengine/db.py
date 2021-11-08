@@ -91,9 +91,15 @@ class:
    ContactForm = model_form(Contact, base_class=BaseContactForm)
 
 """
-from wtforms import Form, validators, widgets, fields as f
+from wtforms import fields as f
+from wtforms import Form
+from wtforms import validators
+from wtforms import widgets
 from wtforms.compat import iteritems
-from .fields import GeoPtPropertyField, ReferencePropertyField, StringListPropertyField
+
+from .fields import GeoPtPropertyField
+from .fields import ReferencePropertyField
+from .fields import StringListPropertyField
 
 
 def get_TextField(kwargs):
@@ -101,7 +107,7 @@ def get_TextField(kwargs):
     Returns a ``TextField``, applying the ``db.StringProperty`` length limit
     of 500 bytes.
     """
-    kwargs['validators'].append(validators.length(max=500))
+    kwargs["validators"].append(validators.length(max=500))
     return f.TextField(**kwargs)
 
 
@@ -110,15 +116,15 @@ def get_IntegerField(kwargs):
     Returns an ``IntegerField``, applying the ``db.IntegerProperty`` range
     limits.
     """
-    v = validators.NumberRange(min=-0x8000000000000000, max=0x7fffffffffffffff)
-    kwargs['validators'].append(v)
+    v = validators.NumberRange(min=-0x8000000000000000, max=0x7FFFFFFFFFFFFFFF)
+    kwargs["validators"].append(v)
     return f.IntegerField(**kwargs)
 
 
 def convert_StringProperty(model, prop, kwargs):
     """Returns a form field for a ``db.StringProperty``."""
     if prop.multiline:
-        kwargs['validators'].append(validators.length(max=500))
+        kwargs["validators"].append(validators.length(max=500))
         return f.TextAreaField(**kwargs)
     else:
         return get_TextField(kwargs)
@@ -149,7 +155,7 @@ def convert_DateTimeProperty(model, prop, kwargs):
     if prop.auto_now or prop.auto_now_add:
         return None
 
-    kwargs.setdefault('format', '%Y-%m-%d %H:%M:%S')
+    kwargs.setdefault("format", "%Y-%m-%d %H:%M:%S")
     return f.DateTimeField(**kwargs)
 
 
@@ -158,7 +164,7 @@ def convert_DateProperty(model, prop, kwargs):
     if prop.auto_now or prop.auto_now_add:
         return None
 
-    kwargs.setdefault('format', '%Y-%m-%d')
+    kwargs.setdefault("format", "%Y-%m-%d")
     return f.DateField(**kwargs)
 
 
@@ -167,7 +173,7 @@ def convert_TimeProperty(model, prop, kwargs):
     if prop.auto_now or prop.auto_now_add:
         return None
 
-    kwargs.setdefault('format', '%H:%M:%S')
+    kwargs.setdefault("format", "%H:%M:%S")
     return f.DateTimeField(**kwargs)
 
 
@@ -183,8 +189,8 @@ def convert_StringListProperty(model, prop, kwargs):
 
 def convert_ReferenceProperty(model, prop, kwargs):
     """Returns a form field for a ``db.ReferenceProperty``."""
-    kwargs['reference_class'] = prop.reference_class
-    kwargs.setdefault('allow_blank', not prop.required)
+    kwargs["reference_class"] = prop.reference_class
+    kwargs.setdefault("allow_blank", not prop.required)
     return ReferencePropertyField(**kwargs)
 
 
@@ -215,13 +221,13 @@ def convert_CategoryProperty(model, prop, kwargs):
 
 def convert_LinkProperty(model, prop, kwargs):
     """Returns a form field for a ``db.LinkProperty``."""
-    kwargs['validators'].append(validators.url())
+    kwargs["validators"].append(validators.url())
     return get_TextField(kwargs)
 
 
 def convert_EmailProperty(model, prop, kwargs):
     """Returns a form field for a ``db.EmailProperty``."""
-    kwargs['validators'].append(validators.email())
+    kwargs["validators"].append(validators.email())
     return get_TextField(kwargs)
 
 
@@ -247,11 +253,11 @@ def convert_PostalAddressProperty(model, prop, kwargs):
 
 def convert_RatingProperty(model, prop, kwargs):
     """Returns a form field for a ``db.RatingProperty``."""
-    kwargs['validators'].append(validators.NumberRange(min=0, max=100))
+    kwargs["validators"].append(validators.NumberRange(min=0, max=100))
     return f.IntegerField(**kwargs)
 
 
-class ModelConverter(object):
+class ModelConverter:
     """
     Converts properties from a ``db.Model`` class to form fields.
 
@@ -313,34 +319,37 @@ class ModelConverter(object):
     | _ReverseReferenceP.| None              | <iterable>   | always skipped   |
     +====================+===================+==============+==================+
     """
+
     default_converters = {
-        'StringProperty':        convert_StringProperty,
-        'ByteStringProperty':    convert_ByteStringProperty,
-        'BooleanProperty':       convert_BooleanProperty,
-        'IntegerProperty':       convert_IntegerProperty,
-        'FloatProperty':         convert_FloatProperty,
-        'DateTimeProperty':      convert_DateTimeProperty,
-        'DateProperty':          convert_DateProperty,
-        'TimeProperty':          convert_TimeProperty,
-        'ListProperty':          convert_ListProperty,
-        'StringListProperty':    convert_StringListProperty,
-        'ReferenceProperty':     convert_ReferenceProperty,
-        'SelfReferenceProperty': convert_SelfReferenceProperty,
-        'UserProperty':          convert_UserProperty,
-        'BlobProperty':          convert_BlobProperty,
-        'TextProperty':          convert_TextProperty,
-        'CategoryProperty':      convert_CategoryProperty,
-        'LinkProperty':          convert_LinkProperty,
-        'EmailProperty':         convert_EmailProperty,
-        'GeoPtProperty':         convert_GeoPtProperty,
-        'IMProperty':            convert_IMProperty,
-        'PhoneNumberProperty':   convert_PhoneNumberProperty,
-        'PostalAddressProperty': convert_PostalAddressProperty,
-        'RatingProperty':        convert_RatingProperty,
+        "StringProperty": convert_StringProperty,
+        "ByteStringProperty": convert_ByteStringProperty,
+        "BooleanProperty": convert_BooleanProperty,
+        "IntegerProperty": convert_IntegerProperty,
+        "FloatProperty": convert_FloatProperty,
+        "DateTimeProperty": convert_DateTimeProperty,
+        "DateProperty": convert_DateProperty,
+        "TimeProperty": convert_TimeProperty,
+        "ListProperty": convert_ListProperty,
+        "StringListProperty": convert_StringListProperty,
+        "ReferenceProperty": convert_ReferenceProperty,
+        "SelfReferenceProperty": convert_SelfReferenceProperty,
+        "UserProperty": convert_UserProperty,
+        "BlobProperty": convert_BlobProperty,
+        "TextProperty": convert_TextProperty,
+        "CategoryProperty": convert_CategoryProperty,
+        "LinkProperty": convert_LinkProperty,
+        "EmailProperty": convert_EmailProperty,
+        "GeoPtProperty": convert_GeoPtProperty,
+        "IMProperty": convert_IMProperty,
+        "PhoneNumberProperty": convert_PhoneNumberProperty,
+        "PostalAddressProperty": convert_PostalAddressProperty,
+        "RatingProperty": convert_RatingProperty,
     }
 
     # Don't automatically add a required validator for these properties
-    NO_AUTO_REQUIRED = frozenset(['ListProperty', 'StringListProperty', 'BooleanProperty'])
+    NO_AUTO_REQUIRED = frozenset(
+        ["ListProperty", "StringListProperty", "BooleanProperty"]
+    )
 
     def __init__(self, converters=None):
         """
@@ -365,20 +374,20 @@ class ModelConverter(object):
         """
         prop_type_name = type(prop).__name__
         kwargs = {
-            'label': prop.name.replace('_', ' ').title(),
-            'default': prop.default_value(),
-            'validators': [],
+            "label": prop.name.replace("_", " ").title(),
+            "default": prop.default_value(),
+            "validators": [],
         }
         if field_args:
             kwargs.update(field_args)
 
         if prop.required and prop_type_name not in self.NO_AUTO_REQUIRED:
-            kwargs['validators'].append(validators.required())
+            kwargs["validators"].append(validators.required())
 
         if prop.choices:
             # Use choices in a select field if it was not provided in field_args
-            if 'choices' not in kwargs:
-                kwargs['choices'] = [(v, v) for v in prop.choices]
+            if "choices" not in kwargs:
+                kwargs["choices"] = [(v, v) for v in prop.choices]
             return f.SelectField(**kwargs)
         else:
             converter = self.converters.get(prop_type_name, None)
@@ -386,8 +395,7 @@ class ModelConverter(object):
                 return converter(model, prop, kwargs)
 
 
-def model_fields(model, only=None, exclude=None, field_args=None,
-                 converter=None):
+def model_fields(model, only=None, exclude=None, field_args=None, converter=None):
     """
     Extracts and returns a dictionary of form fields for a given
     ``db.Model`` class.
@@ -431,8 +439,9 @@ def model_fields(model, only=None, exclude=None, field_args=None,
     return field_dict
 
 
-def model_form(model, base_class=Form, only=None, exclude=None, field_args=None,
-               converter=None):
+def model_form(
+    model, base_class=Form, only=None, exclude=None, field_args=None, converter=None
+):
     """
     Creates and returns a dynamic ``wtforms.Form`` class for a given
     ``db.Model`` class. The form class can be used as it is or serve as a base
@@ -461,4 +470,4 @@ def model_form(model, base_class=Form, only=None, exclude=None, field_args=None,
 
     # Return a dynamically created form class, extending from base_class and
     # including the created fields as properties.
-    return type(model.kind() + 'Form', (base_class,), field_dict)
+    return type(model.kind() + "Form", (base_class,), field_dict)

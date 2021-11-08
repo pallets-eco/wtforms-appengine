@@ -8,21 +8,20 @@ pip install nose nosegae
 
 nosetests --with-gae --without-sandbox
 """
-from __future__ import unicode_literals
-
 # This needs to stay as the first import, it sets up paths.
-from gaetest_common import DummyPostData, fill_authors, DBTestCase
-
 from unittest import TestCase
-
-from google.appengine.ext import db
-
-from wtforms import Form, fields as f, validators
 from wtforms_appengine.db import model_form
-from wtforms_appengine.fields import (
-    GeoPtPropertyField, ReferencePropertyField,
-    StringListPropertyField,  # IntegerListPropertyField
-)
+from wtforms_appengine.fields import GeoPtPropertyField
+from wtforms_appengine.fields import ReferencePropertyField
+from wtforms_appengine.fields import StringListPropertyField
+
+from gaetest_common import DBTestCase
+from gaetest_common import DummyPostData
+from gaetest_common import fill_authors
+from google.appengine.ext import db
+from wtforms import fields as f
+from wtforms import Form
+from wtforms import validators
 
 
 class Author(db.Model):
@@ -38,6 +37,7 @@ class Book(db.Model):
 
 class AllPropertiesModel(db.Model):
     """Property names are ugly, yes."""
+
     prop_string = db.StringProperty()
     prop_byte_string = db.ByteStringProperty()
     prop_boolean = db.BooleanProperty()
@@ -83,10 +83,10 @@ class TestModelForm(DBTestCase):
     def test_model_form_basic(self):
         form_class = model_form(Author)
 
-        self.assertEqual(hasattr(form_class, 'name'), True)
-        self.assertEqual(hasattr(form_class, 'age'), True)
-        self.assertEqual(hasattr(form_class, 'city'), True)
-        self.assertEqual(hasattr(form_class, 'is_admin'), True)
+        self.assertEqual(hasattr(form_class, "name"), True)
+        self.assertEqual(hasattr(form_class, "age"), True)
+        self.assertEqual(hasattr(form_class, "city"), True)
+        self.assertEqual(hasattr(form_class, "is_admin"), True)
 
         form = form_class()
         self.assertEqual(isinstance(form.name, f.TextField), True)
@@ -113,24 +113,24 @@ class TestModelForm(DBTestCase):
         self.assertEqual(form.is_admin.default, False)
 
     def test_model_form_only(self):
-        form_class = model_form(Author, only=['name', 'age'])
+        form_class = model_form(Author, only=["name", "age"])
 
-        self.assertEqual(hasattr(form_class, 'name'), True)
-        self.assertEqual(hasattr(form_class, 'city'), False)
-        self.assertEqual(hasattr(form_class, 'age'), True)
-        self.assertEqual(hasattr(form_class, 'is_admin'), False)
+        self.assertEqual(hasattr(form_class, "name"), True)
+        self.assertEqual(hasattr(form_class, "city"), False)
+        self.assertEqual(hasattr(form_class, "age"), True)
+        self.assertEqual(hasattr(form_class, "is_admin"), False)
 
         form = form_class()
         self.assertEqual(isinstance(form.name, f.TextField), True)
         self.assertEqual(isinstance(form.age, f.IntegerField), True)
 
     def test_model_form_exclude(self):
-        form_class = model_form(Author, exclude=['is_admin'])
+        form_class = model_form(Author, exclude=["is_admin"])
 
-        self.assertEqual(hasattr(form_class, 'name'), True)
-        self.assertEqual(hasattr(form_class, 'city'), True)
-        self.assertEqual(hasattr(form_class, 'age'), True)
-        self.assertEqual(hasattr(form_class, 'is_admin'), False)
+        self.assertEqual(hasattr(form_class, "name"), True)
+        self.assertEqual(hasattr(form_class, "city"), True)
+        self.assertEqual(hasattr(form_class, "age"), True)
+        self.assertEqual(hasattr(form_class, "is_admin"), False)
 
         form = form_class()
         self.assertEqual(isinstance(form.name, f.TextField), True)
@@ -141,103 +141,104 @@ class TestModelForm(DBTestCase):
         """Fields marked as auto_add / auto_add_now should not be included."""
         form_class = model_form(DateTimeModel)
 
-        self.assertEqual(hasattr(form_class, 'prop_date_time_1'), True)
-        self.assertEqual(hasattr(form_class, 'prop_date_time_2'), False)
-        self.assertEqual(hasattr(form_class, 'prop_date_time_3'), False)
+        self.assertEqual(hasattr(form_class, "prop_date_time_1"), True)
+        self.assertEqual(hasattr(form_class, "prop_date_time_2"), False)
+        self.assertEqual(hasattr(form_class, "prop_date_time_3"), False)
 
-        self.assertEqual(hasattr(form_class, 'prop_date_1'), True)
-        self.assertEqual(hasattr(form_class, 'prop_date_2'), False)
-        self.assertEqual(hasattr(form_class, 'prop_date_3'), False)
+        self.assertEqual(hasattr(form_class, "prop_date_1"), True)
+        self.assertEqual(hasattr(form_class, "prop_date_2"), False)
+        self.assertEqual(hasattr(form_class, "prop_date_3"), False)
 
-        self.assertEqual(hasattr(form_class, 'prop_time_1'), True)
-        self.assertEqual(hasattr(form_class, 'prop_time_2'), False)
-        self.assertEqual(hasattr(form_class, 'prop_time_3'), False)
+        self.assertEqual(hasattr(form_class, "prop_time_1"), True)
+        self.assertEqual(hasattr(form_class, "prop_time_2"), False)
+        self.assertEqual(hasattr(form_class, "prop_time_3"), False)
 
     def test_not_implemented_properties(self):
         # This should not raise NotImplementedError.
         form_class = model_form(AllPropertiesModel)
 
         # These should be set.
-        self.assertEqual(hasattr(form_class, 'prop_string'), True)
-        self.assertEqual(hasattr(form_class, 'prop_byte_string'), True)
-        self.assertEqual(hasattr(form_class, 'prop_boolean'), True)
-        self.assertEqual(hasattr(form_class, 'prop_integer'), True)
-        self.assertEqual(hasattr(form_class, 'prop_float'), True)
-        self.assertEqual(hasattr(form_class, 'prop_date_time'), True)
-        self.assertEqual(hasattr(form_class, 'prop_date'), True)
-        self.assertEqual(hasattr(form_class, 'prop_time'), True)
-        self.assertEqual(hasattr(form_class, 'prop_string_list'), True)
-        self.assertEqual(hasattr(form_class, 'prop_reference'), True)
-        self.assertEqual(hasattr(form_class, 'prop_self_refeference'), True)
-        self.assertEqual(hasattr(form_class, 'prop_blob'), True)
-        self.assertEqual(hasattr(form_class, 'prop_text'), True)
-        self.assertEqual(hasattr(form_class, 'prop_category'), True)
-        self.assertEqual(hasattr(form_class, 'prop_link'), True)
-        self.assertEqual(hasattr(form_class, 'prop_email'), True)
-        self.assertEqual(hasattr(form_class, 'prop_geo_pt'), True)
-        self.assertEqual(hasattr(form_class, 'prop_phone_number'), True)
-        self.assertEqual(hasattr(form_class, 'prop_postal_address'), True)
-        self.assertEqual(hasattr(form_class, 'prop_rating'), True)
+        self.assertEqual(hasattr(form_class, "prop_string"), True)
+        self.assertEqual(hasattr(form_class, "prop_byte_string"), True)
+        self.assertEqual(hasattr(form_class, "prop_boolean"), True)
+        self.assertEqual(hasattr(form_class, "prop_integer"), True)
+        self.assertEqual(hasattr(form_class, "prop_float"), True)
+        self.assertEqual(hasattr(form_class, "prop_date_time"), True)
+        self.assertEqual(hasattr(form_class, "prop_date"), True)
+        self.assertEqual(hasattr(form_class, "prop_time"), True)
+        self.assertEqual(hasattr(form_class, "prop_string_list"), True)
+        self.assertEqual(hasattr(form_class, "prop_reference"), True)
+        self.assertEqual(hasattr(form_class, "prop_self_refeference"), True)
+        self.assertEqual(hasattr(form_class, "prop_blob"), True)
+        self.assertEqual(hasattr(form_class, "prop_text"), True)
+        self.assertEqual(hasattr(form_class, "prop_category"), True)
+        self.assertEqual(hasattr(form_class, "prop_link"), True)
+        self.assertEqual(hasattr(form_class, "prop_email"), True)
+        self.assertEqual(hasattr(form_class, "prop_geo_pt"), True)
+        self.assertEqual(hasattr(form_class, "prop_phone_number"), True)
+        self.assertEqual(hasattr(form_class, "prop_postal_address"), True)
+        self.assertEqual(hasattr(form_class, "prop_rating"), True)
 
         # These should NOT be set.
-        self.assertEqual(hasattr(form_class, 'prop_list'), False)
-        self.assertEqual(hasattr(form_class, 'prop_user'), False)
-        self.assertEqual(hasattr(form_class, 'prop_im'), False)
+        self.assertEqual(hasattr(form_class, "prop_list"), False)
+        self.assertEqual(hasattr(form_class, "prop_user"), False)
+        self.assertEqual(hasattr(form_class, "prop_im"), False)
 
     def test_populate_form(self):
         entity = Author(
-            key_name='test',
-            name='John',
-            city='Yukon',
-            age=25,
-            is_admin=True)
+            key_name="test", name="John", city="Yukon", age=25, is_admin=True
+        )
         entity.put()
 
-        obj = Author.get_by_key_name('test')
+        obj = Author.get_by_key_name("test")
         form_class = model_form(Author)
 
         form = form_class(obj=obj)
-        self.assertEqual(form.name.data, 'John')
-        self.assertEqual(form.city.data, 'Yukon')
+        self.assertEqual(form.name.data, "John")
+        self.assertEqual(form.city.data, "Yukon")
         self.assertEqual(form.age.data, 25)
         self.assertEqual(form.is_admin.data, True)
 
     def test_field_attributes(self):
-        form_class = model_form(Author, field_args={
-            'name': {
-                'label': 'Full name',
-                'description': 'Your name',
+        form_class = model_form(
+            Author,
+            field_args={
+                "name": {
+                    "label": "Full name",
+                    "description": "Your name",
+                },
+                "age": {
+                    "label": "Age",
+                    "validators": [validators.NumberRange(min=14, max=99)],
+                },
+                "city": {
+                    "label": "City",
+                    "description": "The city in which you live, not the one in"
+                    " which you were born.",
+                },
+                "is_admin": {
+                    "label": "Administrative rights",
+                },
             },
-            'age': {
-                'label': 'Age',
-                'validators': [validators.NumberRange(min=14, max=99)],
-            },
-            'city': {
-                'label': 'City',
-                'description': 'The city in which you live, not the one in'
-                               ' which you were born.',
-            },
-            'is_admin': {
-                'label': 'Administrative rights',
-            },
-        })
+        )
         form = form_class()
 
-        self.assertEqual(form.name.label.text, 'Full name')
-        self.assertEqual(form.name.description, 'Your name')
+        self.assertEqual(form.name.label.text, "Full name")
+        self.assertEqual(form.name.description, "Your name")
 
-        self.assertEqual(form.age.label.text, 'Age')
+        self.assertEqual(form.age.label.text, "Age")
 
-        self.assertEqual(form.city.label.text, 'City')
+        self.assertEqual(form.city.label.text, "City")
         self.assertEqual(
             form.city.description,
-            'The city in which you live, not the one in which you were born.')
+            "The city in which you live, not the one in which you were born.",
+        )
 
-        self.assertEqual(form.is_admin.label.text, 'Administrative rights')
+        self.assertEqual(form.is_admin.label.text, "Administrative rights")
 
     def test_reference_property(self):
-        keys = set(['__None'])
-        for name in ['foo', 'bar', 'baz']:
+        keys = {"__None"}
+        for name in ["foo", "bar", "baz"]:
             author = Author(name=name, age=26)
             author.put()
             keys.add(str(author.key()))
@@ -257,10 +258,10 @@ class TestGeoFields(TestCase):
         geo = GeoPtPropertyField()
 
     def test_geopt_property(self):
-        form = self.GeoTestForm(DummyPostData(geo='5.0, -7.0'))
+        form = self.GeoTestForm(DummyPostData(geo="5.0, -7.0"))
         self.assertTrue(form.validate())
-        self.assertEqual(form.geo.data, '5.0,-7.0')
-        form = self.GeoTestForm(DummyPostData(geo='5.0,-f'))
+        self.assertEqual(form.geo.data, "5.0,-7.0")
+        form = self.GeoTestForm(DummyPostData(geo="5.0,-f"))
         self.assertFalse(form.validate())
 
 
@@ -269,48 +270,39 @@ class TestReferencePropertyField(DBTestCase):
 
     def build_form(self, reference_class=Author, **kw):
         class BookForm(Form):
-            author = ReferencePropertyField(
-                reference_class=reference_class,
-                **kw)
+            author = ReferencePropertyField(reference_class=reference_class, **kw)
+
         return BookForm
 
     def author_expected(self, selected_index, get_label=lambda x: x.name):
         expected = set()
         for i, author in enumerate(self.authors):
-            expected.add((str(author.key()),
-                          get_label(author),
-                          i == selected_index))
+            expected.add((str(author.key()), get_label(author), i == selected_index))
         return expected
 
     def setUp(self):
-        super(TestReferencePropertyField, self).setUp()
+        super().setUp()
 
         self.authors = fill_authors(Author)
-        self.author_names = set(x.name for x in self.authors)
-        self.author_ages = set(x.age for x in self.authors)
+        self.author_names = {x.name for x in self.authors}
+        self.author_ages = {x.age for x in self.authors}
 
     def test_basic(self):
-        F = self.build_form(
-            get_label='name'
-        )
+        F = self.build_form(get_label="name")
         form = F()
-        self.assertEqual(
-            set(form.author.iter_choices()),
-            self.author_expected(None))
+        self.assertEqual(set(form.author.iter_choices()), self.author_expected(None))
         assert not form.validate()
 
         form = F(DummyPostData(author=str(self.authors[0].key())))
         assert form.validate()
-        self.assertEqual(
-            set(form.author.iter_choices()),
-            self.author_expected(0))
+        self.assertEqual(set(form.author.iter_choices()), self.author_expected(0))
 
     def test_not_in_query(self):
         F = self.build_form()
-        new_author = Author(name='Jim', age=48)
+        new_author = Author(name="Jim", age=48)
         new_author.put()
         form = F(author=new_author)
-        form.author.query = Author.all().filter('name !=', 'Jim')
+        form.author.query = Author.all().filter("name !=", "Jim")
         assert form.author.data is new_author
         assert not form.validate()
 
@@ -318,16 +310,16 @@ class TestReferencePropertyField(DBTestCase):
         get_age = lambda x: x.age
         F = self.build_form(get_label=get_age)
         form = F()
-        ages = set(x.label.text for x in form.author)
+        ages = {x.label.text for x in form.author}
         self.assertEqual(ages, self.author_ages)
 
     def test_allow_blank(self):
-        F = self.build_form(allow_blank=True, get_label='name')
-        form = F(DummyPostData(author='__None'))
+        F = self.build_form(allow_blank=True, get_label="name")
+        form = F(DummyPostData(author="__None"))
         assert form.validate()
         self.assertEqual(form.author.data, None)
         expected = self.author_expected(None)
-        expected.add(('__None', '', True))
+        expected.add(("__None", "", True))
         self.assertEqual(set(form.author.iter_choices()), expected)
 
 
@@ -336,6 +328,6 @@ class TestStringListPropertyField(TestCase):
         a = StringListPropertyField()
 
     def test_basic(self):
-        form = self.F(DummyPostData(a='foo\nbar\nbaz'))
-        self.assertEqual(form.a.data, ['foo', 'bar', 'baz'])
-        self.assertEqual(form.a._value(), 'foo\nbar\nbaz')
+        form = self.F(DummyPostData(a="foo\nbar\nbaz"))
+        self.assertEqual(form.a.data, ["foo", "bar", "baz"])
+        self.assertEqual(form.a._value(), "foo\nbar\nbaz")

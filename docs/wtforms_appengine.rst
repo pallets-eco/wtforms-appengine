@@ -5,11 +5,11 @@ WTForms-Appengine
 WTForms-Appengine includes support for AppEngine fields as well as auto-form
 generation from models.
 
-.. note:: 
-    WTForms-Appengine supports both `appengine.ext.db` and `appengine.ext.ndb` 
-    style models now, and there is some overlap between them. For the near 
-    future, we will continue to support both, but at some point will go to 
-    only supporting AppEngine for python 2.7 and drop support for ext.db 
+.. note::
+    WTForms-Appengine supports both `appengine.ext.db` and `appengine.ext.ndb`
+    style models now, and there is some overlap between them. For the near
+    future, we will continue to support both, but at some point will go to
+    only supporting AppEngine for python 2.7 and drop support for ext.db
     models as well.
 
 Model Forms
@@ -34,7 +34,7 @@ Datastore-backed Fields
 NDB
 ---
 
-WTForms now includes support for NDB models and can support mapping the 
+WTForms now includes support for NDB models and can support mapping the
 relationship fields as well as generating forms from models.
 
 .. autoclass:: KeyPropertyField(default field arguments, reference_class=None, get_label=None, allow_blank=False, blank_text='')
@@ -42,5 +42,3 @@ relationship fields as well as generating forms from models.
 .. module:: wtforms_appengine.ndb
 
 .. autofunction:: model_form(model, base_class=Form, only=None, exclude=None, field_args=None, converter=None)
-
-

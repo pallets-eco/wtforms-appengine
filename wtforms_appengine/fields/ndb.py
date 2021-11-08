@@ -1,17 +1,17 @@
-from __future__ import unicode_literals
-
 import json
 import operator
 
-from wtforms import fields, widgets
+from wtforms import fields
+from wtforms import widgets
 from wtforms.compat import text_type
 
 __all__ = [
-    'KeyPropertyField',
-    'JsonPropertyField',
-    'RepeatedKeyPropertyField',
-    'PrefetchedKeyPropertyField',
-    'RepeatedPrefetchedKeyPropertyField']
+    "KeyPropertyField",
+    "JsonPropertyField",
+    "RepeatedKeyPropertyField",
+    "PrefetchedKeyPropertyField",
+    "RepeatedPrefetchedKeyPropertyField",
+]
 
 
 class KeyPropertyField(fields.SelectFieldBase):
@@ -35,12 +35,21 @@ class KeyPropertyField(fields.SelectFieldBase):
     :param ndb.Query query:
         A query to provide a list of valid options.
     """
+
     widget = widgets.Select()
 
-    def __init__(self, label=None, validators=None, reference_class=None,
-                 get_label=text_type, allow_blank=False, blank_text='',
-                 query=None, **kwargs):
-        super(KeyPropertyField, self).__init__(label, validators, **kwargs)
+    def __init__(
+        self,
+        label=None,
+        validators=None,
+        reference_class=None,
+        get_label=text_type,
+        allow_blank=False,
+        blank_text="",
+        query=None,
+        **kwargs
+    ):
+        super().__init__(label, validators, **kwargs)
 
         if isinstance(get_label, basestring):
             self.get_label = operator.attrgetter(get_label)
@@ -68,7 +77,7 @@ class KeyPropertyField(fields.SelectFieldBase):
         """
         Get's the form-friendly representation of the ndb.Key.
 
-	This should return a hashable object (such as a string).
+        This should return a hashable object (such as a string).
         """
         # n.b. Possible security concern here as urlsafe() exposes
         # *all* the detail about the instance. But it's also the only
@@ -93,18 +102,16 @@ class KeyPropertyField(fields.SelectFieldBase):
 
     def iter_choices(self):
         if self.allow_blank:
-            yield ('__None', self.blank_text, self.data is None)
+            yield ("__None", self.blank_text, self.data is None)
 
         for obj in self.query:
             key = self._key_value(obj.key)
             label = self.get_label(obj)
-            yield (key,
-                   label,
-                   (self.data == obj.key) if self.data else False)
+            yield (key, label, (self.data == obj.key) if self.data else False)
 
     def process_formdata(self, valuelist):
         if valuelist:
-            if valuelist[0] == '__None':
+            if valuelist[0] == "__None":
                 self.data = None
             else:
                 self._data = None
@@ -116,15 +123,15 @@ class KeyPropertyField(fields.SelectFieldBase):
                 if self.data == obj.key:
                     break
             else:
-                raise ValueError(self.gettext('Not a valid choice'))
+                raise ValueError(self.gettext("Not a valid choice"))
         elif not self.allow_blank:
-            raise ValueError(self.gettext('Not a valid choice'))
+            raise ValueError(self.gettext("Not a valid choice"))
 
     def populate_obj(self, obj, name):
         setattr(obj, name, self.data)
 
 
-class SelectMultipleMixin(object):
+class SelectMultipleMixin:
     widget = widgets.Select(multiple=True)
 
     def iter_choices(self):
@@ -151,8 +158,7 @@ class SelectMultipleMixin(object):
             values = [x.key for x in self.query]
             for d in self.data:
                 if d not in values:
-                    raise ValueError(
-                        "%(value)s is not a valid choice for this field")
+                    raise ValueError("%(value)s is not a valid choice for this field")
 
     def _get_data(self):
         if self._formdata is not None:
@@ -183,6 +189,7 @@ class PrefetchedKeyPropertyField(KeyPropertyField):
 
     See :py:`KeyPropertyField` for constructor arguments.
     """
+
     widget = widgets.Select()
 
     def set_query(self, query):
@@ -193,8 +200,9 @@ class PrefetchedKeyPropertyField(KeyPropertyField):
         return self._query.get_result()
 
 
-class RepeatedPrefetchedKeyPropertyField(SelectMultipleMixin,
-                                         PrefetchedKeyPropertyField):
+class RepeatedPrefetchedKeyPropertyField(
+    SelectMultipleMixin, PrefetchedKeyPropertyField
+):
     widget = widgets.Select(multiple=True)
 
 
@@ -203,15 +211,14 @@ class JsonPropertyField(fields.StringField):
     This field is the base for most of the more complicated fields, and
     represents an ``<input type="text">``.
     """
+
     widget = widgets.TextArea()
 
     def process_formdata(self, valuelist):
-        if valuelist is not "":
+        if valuelist != "":
             self.data = json.loads(valuelist[0])
         else:
             self.data = None
 
     def _value(self):
-        return json.dumps(self.data) if self.data is not None else ''
-
-
+        return json.dumps(self.data) if self.data is not None else ""

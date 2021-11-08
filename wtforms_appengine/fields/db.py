@@ -1,13 +1,15 @@
-from __future__ import unicode_literals
-
 import operator
 
-from wtforms import fields, widgets
-from wtforms.compat import text_type, string_types
+from wtforms import fields
+from wtforms import widgets
+from wtforms.compat import string_types
+from wtforms.compat import text_type
 
-__all__ = ['ReferencePropertyField',
-           'StringListPropertyField',
-           'IntegerListPropertyField']
+__all__ = [
+    "ReferencePropertyField",
+    "StringListPropertyField",
+    "IntegerListPropertyField",
+]
 
 
 class ReferencePropertyField(fields.SelectFieldBase):
@@ -30,13 +32,20 @@ class ReferencePropertyField(fields.SelectFieldBase):
     :param blank_text:
         Use this to override the default blank option's label.
     """
+
     widget = widgets.Select()
 
-    def __init__(self, label=None, validators=None, reference_class=None,
-                 get_label=None, allow_blank=False,
-                 blank_text='', **kwargs):
-        super(ReferencePropertyField, self).__init__(label, validators,
-                                                     **kwargs)
+    def __init__(
+        self,
+        label=None,
+        validators=None,
+        reference_class=None,
+        get_label=None,
+        allow_blank=False,
+        blank_text="",
+        **kwargs
+    ):
+        super().__init__(label, validators, **kwargs)
         if get_label is None:
             self.get_label = lambda x: x
         elif isinstance(get_label, string_types):
@@ -66,18 +75,16 @@ class ReferencePropertyField(fields.SelectFieldBase):
 
     def iter_choices(self):
         if self.allow_blank:
-            yield ('__None', self.blank_text, self.data is None)
+            yield ("__None", self.blank_text, self.data is None)
 
         for obj in self.query:
             key = str(obj.key())
             label = self.get_label(obj)
-            yield (key,
-                   label,
-                   (self.data.key() == obj.key()) if self.data else False)
+            yield (key, label, (self.data.key() == obj.key()) if self.data else False)
 
     def process_formdata(self, valuelist):
         if valuelist:
-            if valuelist[0] == '__None':
+            if valuelist[0] == "__None":
                 self.data = None
             else:
                 self._data = None
@@ -91,9 +98,9 @@ class ReferencePropertyField(fields.SelectFieldBase):
                 if s_key == str(obj.key()):
                     break
             else:
-                raise ValueError(self.gettext('Not a valid choice'))
+                raise ValueError(self.gettext("Not a valid choice"))
         elif not self.allow_blank:
-            raise ValueError(self.gettext('Not a valid choice'))
+            raise ValueError(self.gettext("Not a valid choice"))
 
 
 class StringListPropertyField(fields.TextAreaField):
@@ -101,18 +108,19 @@ class StringListPropertyField(fields.TextAreaField):
     A field for ``db.StringListProperty``. The list items are rendered in a
     textarea.
     """
+
     def _value(self):
         if self.raw_data:
             return self.raw_data[0]
         else:
-            return self.data and text_type("\n".join(self.data)) or ''
+            return self.data and text_type("\n".join(self.data)) or ""
 
     def process_formdata(self, valuelist):
         if valuelist:
             try:
                 self.data = valuelist[0].splitlines()
             except ValueError:
-                raise ValueError(self.gettext('Not a valid list'))
+                raise ValueError(self.gettext("Not a valid list"))
 
 
 class IntegerListPropertyField(fields.TextAreaField):
@@ -120,17 +128,16 @@ class IntegerListPropertyField(fields.TextAreaField):
     A field for ``db.StringListProperty``. The list items are rendered in a
     textarea.
     """
+
     def _value(self):
         if self.raw_data:
             return self.raw_data[0]
         else:
-            return text_type('\n'.join(self.data)) if self.data else ''
+            return text_type("\n".join(self.data)) if self.data else ""
 
     def process_formdata(self, valuelist):
         if valuelist:
             try:
                 self.data = [int(value) for value in valuelist[0].splitlines()]
             except ValueError:
-                raise ValueError(self.gettext('Not a valid integer list'))
-
-
+                raise ValueError(self.gettext("Not a valid integer list"))

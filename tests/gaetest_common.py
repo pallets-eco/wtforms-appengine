@@ -4,10 +4,11 @@ This contains common tools for gae tests, and also sets up the environment.
 It should be the first import in the unit tests.
 """
 # -- First setup paths
-import sys
 import os
+import sys
+
 my_dir = os.path.dirname(os.path.abspath(__file__))
-BASE_DIR = os.path.abspath(os.path.join(my_dir, '..'))
+BASE_DIR = os.path.abspath(os.path.join(my_dir, ".."))
 if BASE_DIR not in sys.path:
     sys.path.insert(0, BASE_DIR)
 
@@ -18,9 +19,9 @@ from google.appengine.datastore import datastore_stub_util
 
 
 SAMPLE_AUTHORS = (
-    ('Bob', 'Boston'),
-    ('Harry', 'Houston'),
-    ('Linda', 'London'),
+    ("Bob", "Boston"),
+    ("Harry", "Houston"),
+    ("Linda", "London"),
 )
 
 
@@ -52,8 +53,7 @@ class NDBTestCase(TestCase):
         self.testbed = testbed.Testbed()
         self.testbed.activate()
 
-        policy = datastore_stub_util.PseudoRandomHRConsistencyPolicy(
-            probability=1)
+        policy = datastore_stub_util.PseudoRandomHRConsistencyPolicy(probability=1)
         self.testbed.init_datastore_v3_stub(consistency_policy=policy)
 
         ctx = ndb.get_context()
@@ -64,14 +64,12 @@ class NDBTestCase(TestCase):
         self.testbed.deactivate()
 
 
-
 class DBTestCase(TestCase):
     def setUp(self):
         self.testbed = testbed.Testbed()
         self.testbed.activate()
 
-        policy = datastore_stub_util.PseudoRandomHRConsistencyPolicy(
-            probability=1)
+        policy = datastore_stub_util.PseudoRandomHRConsistencyPolicy(probability=1)
         self.testbed.init_datastore_v3_stub(consistency_policy=policy)
 
     def tearDown(self):

@@ -1,33 +1,33 @@
-from __future__ import unicode_literals
-
-from wtforms.compat import text_type
-
 from itertools import product
-
-# This needs to stay as the first import, it sets up paths.
-from gaetest_common import DummyPostData, fill_authors, NDBTestCase
-
-from google.appengine.ext import ndb
-
-from wtforms import Form, TextField, IntegerField, BooleanField, \
-    SelectField, SelectMultipleField, FormField, FieldList
-
-from wtforms_appengine.fields import \
-    KeyPropertyField, \
-    RepeatedKeyPropertyField,\
-    PrefetchedKeyPropertyField,\
-    RepeatedPrefetchedKeyPropertyField,\
-    JsonPropertyField
-
+from wtforms_appengine.fields import JsonPropertyField
+from wtforms_appengine.fields import KeyPropertyField
+from wtforms_appengine.fields import PrefetchedKeyPropertyField
+from wtforms_appengine.fields import RepeatedKeyPropertyField
+from wtforms_appengine.fields import RepeatedPrefetchedKeyPropertyField
 from wtforms_appengine.ndb import model_form
 
 import second_ndb_module
+from gaetest_common import DummyPostData
+from gaetest_common import fill_authors
+from gaetest_common import NDBTestCase
+from google.appengine.ext import ndb
+from wtforms import BooleanField
+from wtforms import FieldList
+from wtforms import Form
+from wtforms import FormField
+from wtforms import IntegerField
+from wtforms import SelectField
+from wtforms import SelectMultipleField
+from wtforms import TextField
+from wtforms.compat import text_type
+
+# This needs to stay as the first import, it sets up paths.
 
 # Silence NDB logging
 ndb.utils.DEBUG = False
 
 
-GENRES = ['sci-fi', 'fantasy', 'other']
+GENRES = ["sci-fi", "fantasy", "other"]
 
 
 class AncestorModel(ndb.Model):
@@ -47,7 +47,7 @@ class AncestorModel(ndb.Model):
         Key('AncestorModel', '1', 'AncestorModel', 1)
         Key('AncestorModel', '1', 'AncestorModel', '1')
         """
-        ids = [1, '1', 2, '2']  # int(1) and str(1) are different ID's
+        ids = [1, "1", 2, "2"]  # int(1) and str(1) are different ID's
 
         for i, parent in enumerate(ids):
             cls(id=parent, sort=-i).put()
@@ -94,7 +94,7 @@ class TestKeyPropertyField(NDBTestCase):
         author = KeyPropertyField(reference_class=Author)
 
     def setUp(self):
-        super(TestKeyPropertyField, self).setUp()
+        super().setUp()
         self.authors = fill_authors(Author)
         self.first_author_key = self.authors[0].key
 
@@ -115,8 +115,7 @@ class TestKeyPropertyField(NDBTestCase):
 
     def test_valid_form_data(self):
         # Valid data
-        data = DummyPostData(
-            author=KeyPropertyField._key_value(self.first_author_key))
+        data = DummyPostData(author=KeyPropertyField._key_value(self.first_author_key))
 
         form = self.get_form(data)
 
@@ -130,7 +129,7 @@ class TestKeyPropertyField(NDBTestCase):
         self.assertEqual(form.author.data, self.first_author_key)
 
     def test_invalid_form_data(self):
-        form = self.get_form(DummyPostData(author='fooflaf'))
+        form = self.get_form(DummyPostData(author="fooflaf"))
         assert not form.validate()
         assert all(x[2] is False for x in form.author.iter_choices())
 
@@ -145,7 +144,7 @@ class TestKeyPropertyField(NDBTestCase):
 
         form = self.F(DummyPostData(), book)
 
-        str(form['author'])
+        str(form["author"])
 
         self.assertEqual(form.author.data, author.key)
 
@@ -176,13 +175,12 @@ class TestKeyPropertyField(NDBTestCase):
 
         # Iter through all of the options, and make sure that we
         # haven't returned a similar key.
-        for choice_value, choice_label, selected in \
-                bound_form['empty'].iter_choices():
+        for choice_value, choice_label, selected in bound_form["empty"].iter_choices():
 
             data_form = F(DummyPostData(empty=choice_value))
             assert data_form.validate()
 
-            instance = data_form['empty'].data.get()
+            instance = data_form["empty"].data.get()
             self.assertEqual(unicode(instance), choice_label)
 
 
@@ -191,7 +189,7 @@ class TestRepeatedKeyPropertyField(NDBTestCase):
         authors = RepeatedKeyPropertyField(reference_class=Author)
 
     def setUp(self):
-        super(TestRepeatedKeyPropertyField, self).setUp()
+        super().setUp()
         self.authors = fill_authors(Author)
         self.first_author_key = self.authors[0].key
         self.second_author_key = self.authors[1].key
@@ -226,29 +224,28 @@ class TestRepeatedKeyPropertyField(NDBTestCase):
         self.assertEqual(inst.authors, [])
 
     def test_values(self):
-        data = DummyPostData(authors=[
-            RepeatedKeyPropertyField._key_value(self.first_author_key),
-            RepeatedKeyPropertyField._key_value(self.second_author_key)])
+        data = DummyPostData(
+            authors=[
+                RepeatedKeyPropertyField._key_value(self.first_author_key),
+                RepeatedKeyPropertyField._key_value(self.second_author_key),
+            ]
+        )
 
         form = self.get_form(data)
 
         assert form.validate(), "Form validation failed. %r" % form.errors
         self.assertEqual(
-            form.authors.data,
-            [self.first_author_key,
-             self.second_author_key])
+            form.authors.data, [self.first_author_key, self.second_author_key]
+        )
 
         inst = Collab()
         form.populate_obj(inst)
-        self.assertEqual(
-            inst.authors,
-            [self.first_author_key,
-             self.second_author_key])
+        self.assertEqual(inst.authors, [self.first_author_key, self.second_author_key])
 
     def test_bad_value(self):
-        data = DummyPostData(authors=[
-            'foo',
-            RepeatedKeyPropertyField._key_value(self.first_author_key)])
+        data = DummyPostData(
+            authors=["foo", RepeatedKeyPropertyField._key_value(self.first_author_key)]
+        )
 
         form = self.get_form(data)
 
@@ -284,10 +281,10 @@ class TestJsonPropertyField(NDBTestCase):
 
     def test_round_trip(self):
         # Valid data
-        test_data = {u'a': {'b': 3, 'c': ['a', 1, False]}}
+        test_data = {"a": {"b": 3, "c": ["a", 1, False]}}
 
         form = self.F()
-        form.process(data={'field': test_data})
+        form.process(data={"field": test_data})
         raw_string = form.field._value()
         assert form.validate()
         form2 = self.F()
@@ -299,14 +296,14 @@ class TestJsonPropertyField(NDBTestCase):
 
 class TestModelForm(NDBTestCase):
     EXPECTED_AUTHOR = [
-        ('name', TextField),
-        ('city', TextField),
-        ('age', IntegerField),
-        ('is_admin', BooleanField),
-        ('genre', SelectField),
-        ('genres', SelectMultipleField),
-        ('address', FormField),
-        ('address_history', FieldList),
+        ("name", TextField),
+        ("city", TextField),
+        ("age", IntegerField),
+        ("is_admin", BooleanField),
+        ("genre", SelectField),
+        ("genres", SelectMultipleField),
+        ("address", FormField),
+        ("address_history", FieldList),
     ]
 
     def test_author(self):
@@ -318,8 +315,8 @@ class TestModelForm(NDBTestCase):
             self.assertEqual(type(field), expected_type)
 
     def test_book(self):
-        authors = set(x.key.urlsafe() for x in fill_authors(Author))
-        authors.add('__None')
+        authors = {x.key.urlsafe() for x in fill_authors(Author)}
+        authors.add("__None")
         form = model_form(Book)
         keys = set()
         for key, b, c in form().author.iter_choices():
@@ -328,8 +325,8 @@ class TestModelForm(NDBTestCase):
         self.assertEqual(authors, keys)
 
     def test_second_book(self):
-        authors = set(text_type(x.key.id()) for x in fill_authors(Author))
-        authors.add('__None')
+        authors = {text_type(x.key.id()) for x in fill_authors(Author)}
+        authors.add("__None")
         form = model_form(second_ndb_module.SecondBook)
         keys = set()
         for key, b, c in form().author.iter_choices():
@@ -343,24 +340,24 @@ class TestModelForm(NDBTestCase):
         # and as such, ends up in the wtforms field unsorted.
         expected = sorted([(v, v) for v in GENRES])
 
-        self.assertEqual(sorted(bound_form['genre'].choices), expected)
-        self.assertEqual(sorted(bound_form['genres'].choices), expected)
+        self.assertEqual(sorted(bound_form["genre"].choices), expected)
+        self.assertEqual(sorted(bound_form["genres"].choices), expected)
 
     def test_choices_override(self):
         """
         Check that when we provide additional choices, they override
         what was specified, or set choices on the field.
         """
-        choices = ['Cat', 'Pig', 'Cow', 'Spaghetti']
+        choices = ["Cat", "Pig", "Cow", "Spaghetti"]
         expected = [(x, x) for x in choices]
 
-        form = model_form(Author, field_args={
-            'genres': {'choices': choices},
-            'name': {'choices': choices}})
+        form = model_form(
+            Author,
+            field_args={"genres": {"choices": choices}, "name": {"choices": choices}},
+        )
 
         bound_form = form()
 
         # For provided choices, they should be in the provided order
-        self.assertEqual(bound_form['genres'].choices, expected)
-        self.assertEqual(bound_form['name'].choices, expected)
-
+        self.assertEqual(bound_form["genres"].choices, expected)
+        self.assertEqual(bound_form["name"].choices, expected)

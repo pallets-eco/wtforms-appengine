@@ -91,14 +91,17 @@ class:
    ContactForm = model_form(Contact, base_class=BaseContactForm)
 
 """
-from wtforms import Form, validators, fields as f
+from wtforms import fields as f
+from wtforms import Form
+from wtforms import validators
 from wtforms.compat import string_types
-from .fields import (GeoPtPropertyField,
-                     JsonPropertyField,
-                     KeyPropertyField,
-                     RepeatedKeyPropertyField,
-                     StringListPropertyField,
-                     IntegerListPropertyField)
+
+from .fields import GeoPtPropertyField
+from .fields import IntegerListPropertyField
+from .fields import JsonPropertyField
+from .fields import KeyPropertyField
+from .fields import RepeatedKeyPropertyField
+from .fields import StringListPropertyField
 
 
 def get_TextField(kwargs):
@@ -106,7 +109,7 @@ def get_TextField(kwargs):
     Returns a ``TextField``, applying the ``ndb.StringProperty`` length limit
     of 500 bytes.
     """
-    kwargs['validators'].append(validators.length(max=500))
+    kwargs["validators"].append(validators.length(max=500))
     return f.TextField(**kwargs)
 
 
@@ -115,12 +118,12 @@ def get_IntegerField(kwargs):
     Returns an ``IntegerField``, applying the ``ndb.IntegerProperty`` range
     limits.
     """
-    v = validators.NumberRange(min=-0x8000000000000000, max=0x7fffffffffffffff)
-    kwargs['validators'].append(v)
+    v = validators.NumberRange(min=-0x8000000000000000, max=0x7FFFFFFFFFFFFFFF)
+    kwargs["validators"].append(v)
     return f.IntegerField(**kwargs)
 
 
-class ModelConverterBase(object):
+class ModelConverterBase:
     def __init__(self, converters=None):
         """
         Constructs the converter, setting the converter callables.
@@ -132,7 +135,7 @@ class ModelConverterBase(object):
         self.converters = {}
 
         for name in dir(self):
-            if not name.startswith('convert_'):
+            if not name.startswith("convert_"):
                 continue
             self.converters[name[8:]] = getattr(self, name)
 
@@ -151,7 +154,7 @@ class ModelConverterBase(object):
         prop_type_name = type(prop).__name__
 
         # check for generic property
-        if(prop_type_name == "GenericProperty"):
+        if prop_type_name == "GenericProperty":
             # try to get type from field args
             generic_type = field_args.get("type")
             if generic_type:
@@ -160,21 +163,20 @@ class ModelConverterBase(object):
             # convert_GenericProperty
 
         kwargs = {
-            'label': (prop._verbose_name or
-                      prop._code_name.replace('_', ' ').title()),
-            'default': prop._default,
-            'validators': [],
+            "label": (prop._verbose_name or prop._code_name.replace("_", " ").title()),
+            "default": prop._default,
+            "validators": [],
         }
         if field_args:
             kwargs.update(field_args)
 
         if prop._required and prop_type_name not in self.NO_AUTO_REQUIRED:
-            kwargs['validators'].append(validators.required())
+            kwargs["validators"].append(validators.required())
 
-        choices = kwargs.get('choices', None) or prop._choices
+        choices = kwargs.get("choices", None) or prop._choices
         if choices:
             # Use choices in a select field.
-            kwargs['choices'] = [(v, v) for v in choices]
+            kwargs["choices"] = [(v, v) for v in choices]
             if prop._repeated:
                 return f.SelectMultipleField(**kwargs)
             else:
@@ -243,16 +245,15 @@ class ModelConverter(ModelConverterBase):
     """  # noqa
 
     # Don't automatically add a required validator for these properties
-    NO_AUTO_REQUIRED = frozenset([
-        'ListProperty',
-        'StringListProperty',
-        'BooleanProperty'])
+    NO_AUTO_REQUIRED = frozenset(
+        ["ListProperty", "StringListProperty", "BooleanProperty"]
+    )
 
     def convert_StringProperty(self, model, prop, kwargs):
         """Returns a form field for a ``ndb.StringProperty``."""
         if prop._repeated:
             return StringListPropertyField(**kwargs)
-        kwargs['validators'].append(validators.length(max=500))
+        kwargs["validators"].append(validators.length(max=500))
         return get_TextField(kwargs)
 
     def convert_BooleanProperty(self, model, prop, kwargs):
@@ -274,7 +275,7 @@ class ModelConverter(ModelConverterBase):
         if prop._auto_now or prop._auto_now_add:
             return None
 
-        kwargs.setdefault('format', '%Y-%m-%d %H:%M:%S')
+        kwargs.setdefault("format", "%Y-%m-%d %H:%M:%S")
         return f.DateTimeField(**kwargs)
 
     def convert_DateProperty(self, model, prop, kwargs):
@@ -282,7 +283,7 @@ class ModelConverter(ModelConverterBase):
         if prop._auto_now or prop._auto_now_add:
             return None
 
-        kwargs.setdefault('format', '%Y-%m-%d')
+        kwargs.setdefault("format", "%Y-%m-%d")
         return f.DateField(**kwargs)
 
     def convert_TimeProperty(self, model, prop, kwargs):
@@ -290,7 +291,7 @@ class ModelConverter(ModelConverterBase):
         if prop._auto_now or prop._auto_now_add:
             return None
 
-        kwargs.setdefault('format', '%H:%M:%S')
+        kwargs.setdefault("format", "%H:%M:%S")
         return f.DateTimeField(**kwargs)
 
     def convert_UserProperty(self, model, prop, kwargs):
@@ -315,7 +316,7 @@ class ModelConverter(ModelConverterBase):
 
     def convert_GenericProperty(self, model, prop, kwargs):
         """Returns a form field for a ``ndb.GenericProperty``."""
-        kwargs['validators'].append(validators.length(max=500))
+        kwargs["validators"].append(validators.length(max=500))
         return get_TextField(kwargs)
 
     def convert_BlobKeyProperty(self, model, prop, kwargs):
@@ -336,8 +337,7 @@ class ModelConverter(ModelConverterBase):
 
     def convert_KeyProperty(self, model, prop, kwargs):
         """Returns a form field for a ``ndb.KeyProperty``."""
-        if 'reference_class' not in kwargs\
-                or 'query' not in kwargs:
+        if "reference_class" not in kwargs or "query" not in kwargs:
             try:
                 reference_class = prop._kind
             except AttributeError:
@@ -351,9 +351,9 @@ class ModelConverter(ModelConverterBase):
                     # If it's not imported, just bail, as we can't
                     # edit this field safely.
                     return None
-            kwargs['reference_class'] = reference_class
+            kwargs["reference_class"] = reference_class
 
-        kwargs.setdefault('allow_blank', not prop._required)
+        kwargs.setdefault("allow_blank", not prop._required)
 
         if prop._repeated:
             return RepeatedKeyPropertyField(**kwargs)
@@ -361,11 +361,11 @@ class ModelConverter(ModelConverterBase):
             return KeyPropertyField(**kwargs)
 
     def convert__ClassKeyProperty(self, model, prop, kwargs):
-            """Returns a form field for a ``ndb.ComputedProperty``."""
-            return None
+        """Returns a form field for a ``ndb.ComputedProperty``."""
+        return None
 
-def model_fields(model, only=None, exclude=None, field_args=None,
-                 converter=None):
+
+def model_fields(model, only=None, exclude=None, field_args=None, converter=None):
     """
     Extracts and returns a dictionary of form fields for a given
     ``db.Model`` class.
@@ -391,8 +391,9 @@ def model_fields(model, only=None, exclude=None, field_args=None,
     # Get the field names we want to include or exclude, starting with the
     # full list of model properties.
     props = model._properties
-    field_names = [x[0] for x in
-                   sorted(props.items(), key=lambda x: x[1]._creation_counter)]
+    field_names = [
+        x[0] for x in sorted(props.items(), key=lambda x: x[1]._creation_counter)
+    ]
 
     if only:
         field_names = list(f for f in only if f in field_names)
@@ -409,8 +410,9 @@ def model_fields(model, only=None, exclude=None, field_args=None,
     return field_dict
 
 
-def model_form(model, base_class=Form, only=None, exclude=None,
-               field_args=None, converter=None):
+def model_form(
+    model, base_class=Form, only=None, exclude=None, field_args=None, converter=None
+):
     """
     Creates and returns a dynamic ``wtforms.Form`` class for a given
     ``ndb.Model`` class. The form class can be used as it is or serve as a base
@@ -439,4 +441,4 @@ def model_form(model, base_class=Form, only=None, exclude=None,
 
     # Return a dynamically created form class, extending from base_class and
     # including the created fields as properties.
-    return type(model._get_kind() + 'Form', (base_class,), field_dict)
+    return type(model._get_kind() + "Form", (base_class,), field_dict)
