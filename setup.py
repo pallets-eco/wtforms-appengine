@@ -8,7 +8,7 @@ dependencies = [
 
 setup(
     name='WTForms-Appengine',
-    version='0.2',
+    version='0.2.1',
     url='http://github.com/wtforms/wtforms-appengine/',
     license='BSD',
     author='Thomas Johansson, James Crasta',

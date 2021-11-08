@@ -4,7 +4,6 @@ import json
 import operator
 
 from wtforms import fields, widgets
-from wtforms.compat import text_type, string_types
 
 __all__ = [
     'KeyPropertyField',
@@ -41,7 +40,7 @@ class KeyPropertyField(fields.SelectFieldBase):
     widget = widgets.Select()
 
     def __init__(self, label=None, validators=None, reference_class=None,
-                 get_label=text_type, allow_blank=False, blank_text='',
+                 get_label=str, allow_blank=False, blank_text='',
                  query=None, **kwargs):
         super(KeyPropertyField, self).__init__(label, validators, **kwargs)
 
@@ -247,7 +246,7 @@ class ReferencePropertyField(KeyPropertyField):
                                                      **kwargs)
         if get_label is None:
             self.get_label = lambda x: x
-        elif isinstance(get_label, string_types):
+        elif isinstance(get_label, str):
             self.get_label = operator.attrgetter(get_label)
         else:
             self.get_label = get_label
@@ -313,7 +312,7 @@ class StringListPropertyField(fields.TextAreaField):
         if self.raw_data:
             return self.raw_data[0]
         else:
-            return self.data and text_type("\n".join(self.data)) or ''
+            return self.data and str("\n".join(self.data)) or ''
 
     def process_formdata(self, valuelist):
         if valuelist:
@@ -332,7 +331,7 @@ class IntegerListPropertyField(fields.TextAreaField):
         if self.raw_data:
             return self.raw_data[0]
         else:
-            return text_type('\n'.join(self.data)) if self.data else ''
+            return str('\n'.join(self.data)) if self.data else ''
 
     def process_formdata(self, valuelist):
         if valuelist:

@@ -1,5 +1,3 @@
-from wtforms.compat import text_type
-
 from itertools import product
 
 # This needs to stay as the first import, it sets up paths.
@@ -343,7 +341,7 @@ class TestModelForm:
 
     def test_second_book(self, client):
         with client.context():
-            authors = set(text_type(x.key.id()) for x in fill_authors(Author))
+            authors = set(str(x.key.id()) for x in fill_authors(Author))
             authors.add('__None')
             form = model_form(second_ndb_module.SecondBook)
             keys = set()

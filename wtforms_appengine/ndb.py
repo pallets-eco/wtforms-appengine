@@ -92,7 +92,6 @@ class:
 
 """
 from wtforms import Form, validators, fields as f
-from wtforms.compat import string_types
 from .fields import (GeoPtPropertyField,
                      JsonPropertyField,
                      KeyPropertyField,
@@ -345,7 +344,7 @@ class ModelConverter(ModelConverterBase):
             except AttributeError:
                 reference_class = prop._reference_class
 
-            if isinstance(reference_class, string_types):
+            if isinstance(reference_class, str):
                 # This assumes that the referenced module is already imported.
                 try:
                     reference_class = model._kind_map[reference_class]
