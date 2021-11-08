@@ -15,5 +15,5 @@ class GeoPtPropertyField(fields.StringField):
                     decimal.Decimal(lat.strip()), decimal.Decimal(lon.strip())
                 )
 
-            except (decimal.InvalidOperation, ValueError):
-                raise ValueError("Not a valid coordinate location")
+            except (decimal.InvalidOperation, ValueError) as exc:
+                raise ValueError("Not a valid coordinate location") from exc

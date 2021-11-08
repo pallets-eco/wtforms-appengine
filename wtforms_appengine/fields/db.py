@@ -117,8 +117,8 @@ class StringListPropertyField(fields.TextAreaField):
         if valuelist:
             try:
                 self.data = valuelist[0].splitlines()
-            except ValueError:
-                raise ValueError(self.gettext("Not a valid list"))
+            except ValueError as exc:
+                raise ValueError(self.gettext("Not a valid list")) from exc
 
 
 class IntegerListPropertyField(fields.TextAreaField):
@@ -137,5 +137,5 @@ class IntegerListPropertyField(fields.TextAreaField):
         if valuelist:
             try:
                 self.data = [int(value) for value in valuelist[0].splitlines()]
-            except ValueError:
-                raise ValueError(self.gettext("Not a valid integer list"))
+            except ValueError as exc:
+                raise ValueError(self.gettext("Not a valid integer list")) from exc
