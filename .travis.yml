@@ -1,20 +1,48 @@
 language: python
 python:
-  - 2.7
+  - 3.6
+  - 3.7
+  - 3.8
+
+before_install:
+  - python -V  # Print out python version for debugging
+  - pip install virtualenv
+  - virtualenv ${HOME}/venv
+  - source ${HOME}/venv/bin/activate
+
+  # Install CA certs, openssl to https downloads, python for gcloud sdk
+  - sudo apt-get install make ca-certificates openssl python
+  - sudo update-ca-certificates
+
+  # Install Java
+  - sudo wget -qO - https://adoptopenjdk.jfrog.io/adoptopenjdk/api/gpg/key/public | sudo apt-key add -
+  - sudo apt-get update
+  - sudo apt-get install -y software-properties-common
+  - sudo add-apt-repository --yes https://adoptopenjdk.jfrog.io/adoptopenjdk/deb/
+  - sudo apt-get -q update
+  - sudo apt-get install -y adoptopenjdk-8-hotspot
+
+  # Download the latest version of the GAE Python SDK
+  - curl https://sdk.cloud.google.com > install.sh
+  - bash install.sh --disable-prompts --install-dir=${HOME}
+  - source ${HOME}/google-cloud-sdk/path.bash.inc
+  - gcloud --quiet components update
+  - gcloud --quiet components install cloud-datastore-emulator
+  - gcloud --quiet components install beta
+  - gcloud --quiet components install appctl
+  - gcloud --quiet components install cloud-build-local
+  - gcloud --quiet components install app-engine-python
+  - gcloud --quiet components install app-engine-python-extras
 
 # command to install dependencies
 install:
-  - "pip install ."
   - "pip install -r tests/requirements.txt"
-  # Download the latest version of the GAE Python SDK
-  - "wget https://storage.googleapis.com/appengine-sdks/featured/google_appengine_1.9.30.zip -nv -O downloaded_appengine.zip"
-  - "unzip -q downloaded_appengine.zip"
   # This is a quick hack, necessary to get fancy_urllib working,
   # by exposing the lib/fancy_urllib/fancy_urllib/ dirctory within for use by appengine.
   - "rm -rf google_appengine/lib/fancy_urllib/__init__.py"
 
 # command to run tests
-script: "coverage run --source=wtforms_appengine `which nosetests` -w tests --with-gae --gae-lib-root=google_appengine"
+script: "pytest --cov wtforms_appengine tests"
 
 after_success:
   - pip install coveralls

@@ -1,0 +1,2 @@
+WTForms>=2.0
+google-cloud-ndb>=1.7.1
