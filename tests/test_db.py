@@ -15,13 +15,13 @@ from wtforms_appengine.fields import GeoPtPropertyField
 from wtforms_appengine.fields import ReferencePropertyField
 from wtforms_appengine.fields import StringListPropertyField
 
-from gaetest_common import DBTestCase
-from gaetest_common import DummyPostData
-from gaetest_common import fill_authors
 from google.appengine.ext import db
 from wtforms import fields as f
 from wtforms import Form
 from wtforms import validators
+from .gaetest_common import DBTestCase
+from .gaetest_common import DummyPostData
+from .gaetest_common import fill_authors
 
 
 class Author(db.Model):

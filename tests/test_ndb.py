@@ -6,10 +6,6 @@ from wtforms_appengine.fields import RepeatedKeyPropertyField
 from wtforms_appengine.fields import RepeatedPrefetchedKeyPropertyField
 from wtforms_appengine.ndb import model_form
 
-import second_ndb_module
-from gaetest_common import DummyPostData
-from gaetest_common import fill_authors
-from gaetest_common import NDBTestCase
 from google.appengine.ext import ndb
 from wtforms import BooleanField
 from wtforms import FieldList
@@ -19,6 +15,10 @@ from wtforms import IntegerField
 from wtforms import SelectField
 from wtforms import SelectMultipleField
 from wtforms import StringField
+from . import second_ndb_module
+from .gaetest_common import DummyPostData
+from .gaetest_common import fill_authors
+from .gaetest_common import NDBTestCase
 
 # This needs to stay as the first import, it sets up paths.
 
